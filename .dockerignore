@@ -1,0 +1,10 @@
+.git
+.gitignore
+.next
+node_modules
+.env
+.env.*
+!ENV.EXAMPLE
+scripts/
+test/
+*.log

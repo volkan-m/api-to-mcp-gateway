@@ -1,0 +1,64 @@
+# ================================================================
+# API to MCP Gateway — Portainer Stack
+# ================================================================
+# Deploy: Portainer → Stacks → Add stack → Git Repository
+#   Repository URL : https://github.com/volkan-m/api-to-mcp-gateway
+#   Compose path   : docker-compose.portainer.yml
+#
+# Required environment variables (Portainer → Stack → Env vars):
+#
+#   POSTGRES_PASSWORD   Database password                    (required)
+#   ENCRYPTION_KEY      32-char credential encryption key   (required)
+#   AUTH_TOKEN          API / dashboard access token        (blank = auth disabled)
+#   ADMIN_PASSWORD      Dashboard login password
+#   APP_PORT            Host port for the app               (default: 3000)
+# ================================================================
+
+services:
+
+  app:
+    build: .
+    container_name: mcp-gateway-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/mcp_gateway?schema=public"
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
+      AUTH_TOKEN: "${AUTH_TOKEN:-}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      BEARER_TOKEN: "${BEARER_TOKEN:-}"
+      INTEGRATION_ID: "${INTEGRATION_ID:-}"
+      MCP_PROXY_INSECURE_TLS: "${MCP_PROXY_INSECURE_TLS:-false}"
+      MCP_TOOL_CACHE_TTL_MS: "${MCP_TOOL_CACHE_TTL_MS:-5000}"
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mcp-gateway-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: mcp-gateway-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: mcp_gateway
+    volumes:
+      - mcp_gateway_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mcp_gateway"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mcp-gateway-net
+
+networks:
+  mcp-gateway-net:
+    driver: bridge
+
+volumes:
+  mcp_gateway_pgdata:
