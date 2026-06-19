@@ -1,0 +1,86 @@
+// Birleşik MCP Gateway Prisma şeması.
+// Tek paylaşılan veri katmanı: hem yönetim API'si (eski C# Core.API) hem de
+// MCP sunucusu bu şemayı kullanır.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ApiIntegration {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  baseUrlProd String
+  baseUrlTest String
+  activeEnv   String   @default("test") // "prod" | "test"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  credentials ApiCredential[]
+  specs       ApiSpec[]
+  endpoints   Endpoint[]
+  selections  ToolSelection[]
+}
+
+model ApiCredential {
+  id               String   @id @default(cuid())
+  apiIntegrationId String
+  credentialType   String // "header" | "query" | "bearer"
+  keyName          String
+  keyValue         String // encrypted (AES-256-CBC, "HEX(iv):HEX(cipher)")
+  createdAt        DateTime @default(now())
+
+  apiIntegration ApiIntegration @relation(fields: [apiIntegrationId], references: [id], onDelete: Cascade)
+}
+
+model ApiSpec {
+  id               String   @id @default(cuid())
+  apiIntegrationId String
+  format           String // "openapi3" | "swagger2"
+  rawContent       String // JSON string
+  title            String?
+  version          String?
+  createdAt        DateTime @default(now())
+
+  apiIntegration ApiIntegration @relation(fields: [apiIntegrationId], references: [id], onDelete: Cascade)
+}
+
+model Endpoint {
+  id               String   @id @default(cuid())
+  apiIntegrationId String
+  method           String // GET, POST, PUT, DELETE, PATCH
+  path             String
+  externalUrlProd  String? // External URL for production environment
+  externalUrlTest  String? // External URL for test environment
+  operationId      String?
+  summary          String?
+  description      String?
+  inputSchema      String // JSON Schema as string
+  outputSchema     String? // JSON Schema as string
+  createdAt        DateTime @default(now())
+
+  apiIntegration ApiIntegration  @relation(fields: [apiIntegrationId], references: [id], onDelete: Cascade)
+  selections     ToolSelection[]
+
+  @@unique([apiIntegrationId, method, path])
+}
+
+model ToolSelection {
+  id               String   @id @default(cuid())
+  apiIntegrationId String
+  endpointId       String
+  toolName         String
+  toolDescription  String?
+  enabled          Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  apiIntegration ApiIntegration @relation(fields: [apiIntegrationId], references: [id], onDelete: Cascade)
+  endpoint       Endpoint       @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@unique([apiIntegrationId, endpointId])
+}

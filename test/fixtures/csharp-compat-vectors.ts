@@ -1,0 +1,57 @@
+// Eski C# `EncryptionService` ile üretilmiş GİBİ kabul edilen, bilinen
+// { plaintext, encrypted } uyum vektörleri. Değerler, C# ile birebir aynı
+// algoritma (AES-256-CBC, key = ENCRYPTION_KEY.PadRight(32).Substring(0,32) UTF-8,
+// çıktı HEX(iv):HEX(ciphertext) BÜYÜK harf) kullanılarak SABİT IV ile,
+// TS `encrypt()` fonksiyonundan bağımsız olarak önceden hesaplanmıştır
+// (bkz. test/fixtures/generate-vectors.mjs).
+//
+// Bu vektörler, yeni TS `decrypt()` fonksiyonunun eski (C#) verilerini
+// çözebildiğini kanıtlamak için kullanılır (Requirement 4.2, Property 3).
+
+export interface CompatVector {
+  /** Şifreleme sırasında kullanılan ENCRYPTION_KEY değeri. */
+  key: string;
+  /** Orijinal düz metin. */
+  plaintext: string;
+  /** C# uyumlu "HEX(iv):HEX(ciphertext)" şifreli değer. */
+  encrypted: string;
+}
+
+/** crypto.ts içindeki DEFAULT_KEY ile aynı (env tanımsızken kullanılan). */
+export const DEFAULT_KEY = "default_encryption_key_32_chars_!!";
+
+/** Özel (üretim benzeri) anahtar — 32 karakterden uzun, Substring(0,32) ile kırpılır. */
+export const CUSTOM_KEY = "my-prod-secret-key-value-123456789";
+
+export const compatVectors: CompatVector[] = [
+  {
+    key: DEFAULT_KEY,
+    plaintext: "Bearer abc123",
+    encrypted:
+      "00112233445566778899AABBCCDDEEFF:741632C038ECBDA31E720C58460443C6",
+  },
+  {
+    key: DEFAULT_KEY,
+    plaintext: "sk-test-0000000000000000",
+    encrypted:
+      "0F0E0D0C0B0A09080706050403020100:35F54D1B125F232C3D366F499C63CAAF2978D8CADF0CCF6E16BF1E122A10A3AB",
+  },
+  {
+    key: DEFAULT_KEY,
+    plaintext: "",
+    encrypted:
+      "112233445566778899AABBCCDDEEFF00:FC4E93B54D2DF03FF7E90F6D87557204",
+  },
+  {
+    key: DEFAULT_KEY,
+    plaintext: "üğşçöÜĞŞÇÖ-türkçe",
+    encrypted:
+      "A1B2C3D4E5F60718293A4B5C6D7E8F90:4CEB293AF770A0F6595B87997603B20B8FBF887B4EC164701D33632FEB30C374",
+  },
+  {
+    key: CUSTOM_KEY,
+    plaintext: "X-Api-Key-Value-998877",
+    encrypted:
+      "FFEEDDCCBBAA99887766554433221100:1BBC4B68EE741D8DD6C84DB2F8F86C06DB0C147BB3C1E1396A5F7AD15D1AD76F",
+  },
+];
