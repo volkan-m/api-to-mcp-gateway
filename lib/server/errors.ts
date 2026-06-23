@@ -1,5 +1,5 @@
-// Uygulama genelinde tipli hata yönetimi.
-// Servis katmanı bu hataları fırlatır; Route Handler'lar HTTP koduna eşler.
+// Application-wide typed error management.
+// Service layer throws these errors; Route Handlers map them to HTTP codes.
 
 export type AppErrorCode =
   | "NOT_FOUND"

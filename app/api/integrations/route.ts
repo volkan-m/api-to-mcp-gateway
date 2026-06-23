@@ -3,7 +3,7 @@ import { integrationService } from "@/lib/server/services/integration-service";
 import { createIntegrationSchema } from "@/lib/validation/schemas";
 import { handleError, ok } from "@/lib/server/http";
 
-// GET /api/integrations  -> entegrasyon listesi
+// GET /api/integrations  -> integration list
 export async function GET() {
   try {
     return ok(await integrationService.list());
@@ -12,7 +12,7 @@ export async function GET() {
   }
 }
 
-// POST /api/integrations -> entegrasyon oluştur
+// POST /api/integrations -> create integration
 export async function POST(req: NextRequest) {
   try {
     const body = createIntegrationSchema.parse(await req.json());

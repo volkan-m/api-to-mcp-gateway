@@ -6,9 +6,9 @@ import {
   UpdateCredentialInput,
 } from "@/lib/validation/schemas";
 
-// Eski C# CreateApiCredentialHandler / DeleteApiCredentialHandler /
-// ListApiCredentialsHandler karşılığı. keyValue her zaman şifreli saklanır,
-// listede maskelenir.
+// Equivalent of old C# CreateApiCredentialHandler / DeleteApiCredentialHandler /
+// ListApiCredentialsHandler. keyValue is always stored encrypted,
+// masked in listings.
 
 export const credentialService = {
   async create(
@@ -31,7 +31,7 @@ export const credentialService = {
     return created.id;
   },
 
-  // keyValue çözülür ama yanıtta maskelenir (asla düz tam değer dönmez).
+  // keyValue is decrypted but masked in the response (never returns full plaintext).
   async list(integrationId: string) {
     const credentials = await prisma.apiCredential.findMany({
       where: { apiIntegrationId: integrationId },
@@ -64,8 +64,8 @@ export const credentialService = {
     await prisma.apiCredential.delete({ where: { id: credentialId } });
   },
 
-  // keyValue boş bırakılırsa mevcut (şifreli) değer korunur; aksi halde
-  // yeni değer şifrelenerek güncellenir.
+  // If keyValue is left empty, the existing (encrypted) value is preserved; otherwise
+  // the new value is encrypted and updated.
   async update(
     credentialId: string,
     input: UpdateCredentialInput,

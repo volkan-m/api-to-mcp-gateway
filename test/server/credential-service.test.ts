@@ -3,7 +3,7 @@ import fc from "fast-check";
 import { propertyLabel } from "../helpers/property-label";
 import { FC_RUNS } from "../helpers/fast-check-config";
 
-// @/lib/db mock'u — paylaşılan singleton db-mock üzerinden.
+// @/lib/db mock — via shared singleton db-mock.
 vi.mock("@/lib/db", async () => {
   const mod = await import("../helpers/db-mock");
   return { prisma: mod.mockPrisma };
@@ -28,7 +28,7 @@ async function seedIntegration(): Promise<string> {
 describe("credential-service — birim testleri", () => {
   beforeEach(() => db._reset());
 
-  // Task 3.1 — Requirements 3.1: keyValue şifreli yazılır
+  // Task 3.1 — Requirements 3.1: keyValue is stored encrypted
   it("create keyValue'yu şifreli saklar (düz metin DB'ye yazılmaz)", async () => {
     const integrationId = await seedIntegration();
     const id = await credentialService.create(integrationId, {
@@ -40,11 +40,11 @@ describe("credential-service — birim testleri", () => {
     const stored = await db.apiCredential.findUnique({ where: { id } });
     expect(stored).not.toBeNull();
     expect(stored!.keyValue).not.toBe("super-secret-123");
-    // HEX:HEX formatı
+    // HEX:HEX format
     expect(stored!.keyValue).toMatch(/^[0-9A-F]+:[0-9A-F]+$/);
   });
 
-  // Task 3.1 — Requirements 3.6: credentialType doğrulaması (Zod katmanı)
+  // Task 3.1 — Requirements 3.6: credentialType validation (Zod layer)
   it("geçersiz credentialType reddedilir (Zod)", () => {
     const result = createCredentialSchema.safeParse({
       credentialType: "oauth",
@@ -65,7 +65,7 @@ describe("credential-service — birim testleri", () => {
     }
   });
 
-  // Task 3.1 — boş keyName reddedilir (Zod)
+  // Task 3.1 — empty keyName rejected (Zod)
   it("boş keyName reddedilir (Zod)", () => {
     const result = createCredentialSchema.safeParse({
       credentialType: "header",
@@ -102,13 +102,13 @@ describe("credential-service — property-based testleri", () => {
             expect(list).toHaveLength(1);
             const item = list[0] as Record<string, unknown>;
 
-            // Maskeli alan dışında ham anahtar değeri içeren bir alan olmamalı.
+            // No field other than the masked field should contain the raw key value.
             const serialized = JSON.stringify(item);
             expect(serialized).not.toContain(secret);
-            // Tam şifreli değer de sızdırılmaz (yalnızca maskeli alan döner).
+            // Full encrypted value is also not leaked (only masked field is returned).
             const stored = db.apiCredential.rows[0];
             expect(serialized).not.toContain(stored.keyValue);
-            // keyValueMasked alanı mevcut ve ham değerden farklı.
+            // keyValueMasked field exists and differs from the raw value.
             expect(item.keyValueMasked).toBeDefined();
             expect(item.keyValueMasked).not.toBe(secret);
           },

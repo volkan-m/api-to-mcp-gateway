@@ -5,7 +5,7 @@ import { handleError, ok } from "@/lib/server/http";
 
 type Params = { params: Promise<{ id: string }> };
 
-// POST /api/integrations/[id]/specs/url -> URL'den spec indir (SSRF korumalı)
+// POST /api/integrations/[id]/specs/url -> download spec from URL (SSRF protected)
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params;

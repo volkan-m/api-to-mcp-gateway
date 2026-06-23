@@ -3,12 +3,12 @@ import { z } from "zod";
 
 const schema = z.object({ password: z.string().min(1) });
 
-// POST /api/auth/login -> şifre doğruysa oturum çerezi ayarla.
+// POST /api/auth/login -> set session cookie if password is correct.
 export async function POST(req: NextRequest) {
   const token = process.env.AUTH_TOKEN;
   const adminPassword = process.env.ADMIN_PASSWORD;
 
-  // Auth devre dışıysa login'e gerek yok.
+  // Auth disabled, login not needed.
   if (!token || !adminPassword) {
     return NextResponse.json(
       { error: "AUTH_DISABLED", message: "Kimlik doğrulama yapılandırılmamış" },
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 gün
+    maxAge: 60 * 60 * 24 * 7, // 7 days
   });
   return res;
 }

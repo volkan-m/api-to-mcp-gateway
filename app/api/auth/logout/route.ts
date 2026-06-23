@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-// POST /api/auth/logout -> oturum çerezini temizle.
+// POST /api/auth/logout -> clear session cookie.
 export async function POST() {
   const res = NextResponse.json({ success: true });
   res.cookies.set("mcp_auth", "", {

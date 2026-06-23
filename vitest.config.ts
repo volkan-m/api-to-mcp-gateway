@@ -1,10 +1,10 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
-// Test yapılandırması. Node ortamı (sunucu/MCP/servis mantığı test edilir),
-// `@/` path alias'ı tsconfig ile aynı şekilde proje köküne bağlanır,
-// fast-check için global varsayılan iterasyon sayısı en az 100'dür
-// (test/setup.ts içinde ayarlanır).
+// Test configuration. Node environment (server/MCP/service logic is tested),
+// `@/` path alias resolves to project root same as tsconfig,
+// global default iteration count for fast-check is at least 100
+// (configured in test/setup.ts).
 export default defineConfig({
   resolve: {
     alias: {

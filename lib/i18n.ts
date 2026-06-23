@@ -1,5 +1,5 @@
-// Çoklu dil (i18n) altyapısı. Orijinal GatewayUI'deki sözlük birebir taşınmıştır.
-// İstemci tarafında localStorage ile kalıcı locale, LocaleContext üzerinden okunur.
+// Multi-language (i18n) infrastructure. The dictionary from the original GatewayUI is ported verbatim.
+// Client-side persistent locale via localStorage is read through LocaleContext.
 
 export type Locale = "en" | "tr";
 
@@ -800,7 +800,7 @@ export function t(
   for (const k of keys) {
     value = (value as Record<string, unknown> | undefined)?.[k];
     if (value === undefined) {
-      // Varsayılan dile düş
+      // Fall back to default locale
       value = translations[defaultLocale];
       for (const k2 of keys) {
         value = (value as Record<string, unknown> | undefined)?.[k2];

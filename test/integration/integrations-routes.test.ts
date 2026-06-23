@@ -34,7 +34,7 @@ const VALID_INTEGRATION = {
 describe("REST route handlers — entegrasyon testleri", () => {
   beforeEach(() => db._reset());
 
-  // Task 11.1 — Requirements 12.1: list boş başlar
+  // Task 11.1 — Requirements 12.1: list starts empty
   it("GET /api/integrations boş liste döner", async () => {
     const res = await integrationsRoute.GET();
     expect(res.status).toBe(200);
@@ -54,7 +54,7 @@ describe("REST route handlers — entegrasyon testleri", () => {
     expect(fetched.name).toBe(VALID_INTEGRATION.name);
   });
 
-  // Task 11.1 — Requirements 12.3: Zod doğrulama hatası -> 400
+  // Task 11.1 — Requirements 12.3: Zod validation error -> 400
   it("geçersiz gövde 400 (VALIDATION_ERROR) döner", async () => {
     const res = await integrationsRoute.POST(jsonReq({ name: "" }));
     expect(res.status).toBe(400);
@@ -62,7 +62,7 @@ describe("REST route handlers — entegrasyon testleri", () => {
     expect(body.error).toBe("VALIDATION_ERROR");
   });
 
-  // Task 11.1 — Requirements 12.2: bilinmeyen kayıt -> 404 (AppError eşlemesi)
+  // Task 11.1 — Requirements 12.2: unknown record -> 404 (AppError mapping)
   it("bilinmeyen id GET 404 (NOT_FOUND) döner", async () => {
     const res = await integrationByIdRoute.GET({} as never, params("does-not-exist"));
     expect(res.status).toBe(404);
@@ -70,14 +70,14 @@ describe("REST route handlers — entegrasyon testleri", () => {
     expect(body.error).toBe("NOT_FOUND");
   });
 
-  // Task 11.1 — CONFLICT eşlemesi -> 409
+  // Task 11.1 — CONFLICT mapping -> 409
   it("aynı isimle ikinci oluşturma 409 (CONFLICT) döner", async () => {
     await integrationsRoute.POST(jsonReq(VALID_INTEGRATION));
     const res = await integrationsRoute.POST(jsonReq(VALID_INTEGRATION));
     expect(res.status).toBe(409);
   });
 
-  // Task 11.1 — credential alt kaynağı (POST -> 201, GET maskeli liste)
+  // Task 11.1 — credential sub-resource (POST -> 201, GET masked list)
   it("credential POST 201, GET maskeli liste döner", async () => {
     const createRes = await integrationsRoute.POST(jsonReq(VALID_INTEGRATION));
     const { id } = (await createRes.json()) as { id: string };
@@ -101,8 +101,8 @@ describe("REST route handlers — entegrasyon testleri", () => {
 describe("REST yüzey eşdeğerliği — property (Property 11)", () => {
   beforeEach(() => db._reset());
 
-  // Eski C# IntegrationsController route tablosu (metot + yol şablonu).
-  // Birleşik Route Handler'larda her birinin var olduğu doğrulanır.
+  // Old C# IntegrationsController route table (method + path template).
+  // Verifies each one exists in the consolidated Route Handlers.
   const routeTable: Array<{ method: string; module: Record<string, unknown> }> = [
     { method: "GET", module: integrationsRoute },
     { method: "POST", module: integrationsRoute },
@@ -113,7 +113,7 @@ describe("REST yüzey eşdeğerliği — property (Property 11)", () => {
     { method: "POST", module: credentialsRoute },
   ];
 
-  // Task 11.2 — Property 11: REST yüzey eşdeğerliği — Validates: Requirements 12.1
+  // Task 11.2 — Property 11: REST surface equivalence — Validates: Requirements 12.1
   it(
     propertyLabel(
       11,
@@ -123,7 +123,7 @@ describe("REST yüzey eşdeğerliği — property (Property 11)", () => {
       fc.assert(
         fc.property(fc.nat(routeTable.length - 1), (idx) => {
           const entry = routeTable[idx];
-          // Her beklenen metot için bir handler export edilmiş olmalı.
+          // A handler must be exported for each expected method.
           expect(typeof entry.module[entry.method]).toBe("function");
         }),
         { numRuns: Math.min(FC_RUNS, routeTable.length * 4) },

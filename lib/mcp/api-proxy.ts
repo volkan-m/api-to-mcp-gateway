@@ -3,10 +3,10 @@ import https from "https";
 import { prisma } from "@/lib/db";
 import { decrypt } from "@/lib/server/crypto";
 
-// Hedef dış API'ye proxy çağrısı. Mevcut MCP `api-proxy.ts` mantığı korunmuştur:
-//  - activeEnv'e göre prod/test base URL veya externalUrl seçimi
-//  - path/query parametre çözümleme
-//  - yetki önceliği: args.bearerToken > customHeaders.Authorization > DB credential > BEARER_TOKEN env
+// Proxy call to the target external API. Existing MCP `api-proxy.ts` logic preserved:
+//  - prod/test base URL or externalUrl selection based on activeEnv
+//  - path/query parameter resolution
+//  - auth priority: args.bearerToken > customHeaders.Authorization > DB credential > BEARER_TOKEN env
 
 export async function proxyApiCall(
   integrationId: string,
@@ -14,8 +14,8 @@ export async function proxyApiCall(
   args: Record<string, unknown>,
   customHeaders?: Record<string, string>,
 ): Promise<{ status: number; data: unknown }> {
-  // Çağıranın args nesnesini mutasyona uğratmamak için sığ kopya ile çalış.
-  // (Aşağıda path/query parametreleri args'tan delete ediliyor.)
+  // Work with a shallow copy to avoid mutating the caller's args object.
+  // (path/query parameters are deleted from args below.)
   args = { ...args };
 
   const endpoint = await prisma.endpoint.findUnique({
@@ -27,8 +27,8 @@ export async function proxyApiCall(
 
   const integration = endpoint.apiIntegration;
 
-  // Bir entegrasyonun birden fazla credential'ı olabilir (ör. header + query).
-  // Hepsi uygulanır.
+  // An integration can have multiple credentials (e.g. header + query).
+  // All are applied.
   const credentials = await prisma.apiCredential.findMany({
     where: { apiIntegrationId: integrationId },
   });
@@ -36,7 +36,7 @@ export async function proxyApiCall(
   const inputSchema = JSON.parse(endpoint.inputSchema || "{}");
   const parameters: Array<Record<string, unknown>> = inputSchema.parameters || inputSchema.Parameters || [];
 
-  // URL kurulumu
+  // URL setup
   const isProd = integration.activeEnv === "prod";
 
   let url: string;
@@ -55,7 +55,7 @@ export async function proxyApiCall(
     }
   }
 
-  // Path parametreleri
+  // Path parameters
   const pathParams = endpoint.path.match(/\{([^}]+)\}/g);
   const pathParamNames: string[] = [];
   if (pathParams) {
@@ -68,7 +68,7 @@ export async function proxyApiCall(
     });
   }
 
-  // Query parametreleri
+  // Query parameters
   const queryParams = new URLSearchParams();
   parameters.forEach((param) => {
     const name = (param.name ?? param.Name) as string | undefined;
@@ -78,7 +78,7 @@ export async function proxyApiCall(
     }
   });
 
-  // İşlenen parametreleri args'tan çıkar
+  // Remove processed parameters from args
   pathParamNames.forEach((paramName) => delete args[paramName]);
   parameters.forEach((param) => {
     const name = (param.name ?? param.Name) as string | undefined;
@@ -92,8 +92,8 @@ export async function proxyApiCall(
     url += `?${queryParams.toString()}`;
   }
 
-  // Header / yetki çözümleme.
-  // Öncelik: args.bearerToken > customHeaders.Authorization > DB credential'lar > BEARER_TOKEN env.
+  // Header / auth resolution.
+  // Priority: args.bearerToken > customHeaders.Authorization > DB credentials > BEARER_TOKEN env.
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -113,8 +113,8 @@ export async function proxyApiCall(
     authHeaderSet = true;
   }
 
-  // DB credential'larını uygula. Birden fazla desteklenir (header + query gibi).
-  // Authorization, args/customHeaders ile zaten ayarlandıysa üzerine yazılmaz.
+  // Apply DB credentials. Multiple are supported (e.g. header + query).
+  // Authorization already set via args/customHeaders is not overwritten.
   for (const credential of credentials) {
     const decryptedValue = decrypt(credential.keyValue);
     if (credential.credentialType === "header") {
@@ -135,7 +135,7 @@ export async function proxyApiCall(
     }
   }
 
-  // Hiçbir yetki ayarlanmadıysa son çare olarak env fallback token.
+  // If no auth has been set, fall back to env token as last resort.
   if (!authHeaderSet && process.env.BEARER_TOKEN) {
     headers["Authorization"] = `Bearer ${process.env.BEARER_TOKEN}`;
   }
@@ -157,8 +157,8 @@ export async function proxyApiCall(
   }
 
   try {
-    // TLS doğrulaması varsayılan olarak AÇIKTIR (güvenli). Self-signed sertifikalı
-    // dahili API'ler için MCP_PROXY_INSECURE_TLS=true ile devre dışı bırakılabilir.
+    // TLS validation is ON by default (secure). Can be disabled with MCP_PROXY_INSECURE_TLS=true
+    // for internal APIs with self-signed certificates.
     const insecureTls = process.env.MCP_PROXY_INSECURE_TLS === "true";
 
     const response = await axios({

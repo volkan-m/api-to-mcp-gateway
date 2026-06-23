@@ -3,15 +3,15 @@ import { z } from "zod";
 const httpUrl = z.string().url("Geçerli bir http(s) URL girin");
 const envEnum = z.enum(["prod", "test"]);
 
-// Boş ("") değere de izin veren opsiyonel URL. Formlar boş alanı "" olarak
-// gönderebildiğinden bunu geçerli sayıp boş değerleri null'a indirger.
+// Optional URL that also accepts empty ("") values. Since forms can send empty
+// fields as "", we treat them as valid and reduce empty values to null.
 const optionalUrl = z
   .union([httpUrl, z.literal("")])
   .optional()
   .nullable();
 
-// İçeriğin parse edilebilir bir JSON olduğunu doğrular (sunucu sonradan
-// JSON.parse ettiğinden bozuk veri girişini erken yakalar).
+// Validates that the content is parseable JSON (catches malformed data early,
+// since the server will JSON.parse it later).
 const jsonString = z
   .string()
   .min(1, "Zorunludur")
@@ -50,7 +50,7 @@ export const createCredentialSchema = z.object({
   keyValue: z.string().min(1, "Anahtar değeri zorunludur"),
 });
 
-// Güncellemede keyValue opsiyoneldir: boş bırakılırsa mevcut (şifreli) değer korunur.
+// On update, keyValue is optional: if left empty, the existing (encrypted) value is preserved.
 export const updateCredentialSchema = z.object({
   credentialType: z.enum(["header", "query", "bearer"]),
   keyName: z.string().min(1, "Anahtar adı zorunludur"),

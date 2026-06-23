@@ -5,8 +5,8 @@ import {
   DEFAULT_KEY,
 } from "../fixtures/csharp-compat-vectors";
 
-// @/lib/db mock'u — eski (C# ile şifrelenmiş) credential satırlarını DB'ye
-// "yerleştirilmiş" gibi seed edip servis akışından okumak için.
+// @/lib/db mock — for seeding legacy (C# encrypted) credential rows as if placed in the DB
+// and reading them through the service flow.
 vi.mock("@/lib/db", async () => {
   const mod = await import("../helpers/db-mock");
   return { prisma: mod.mockPrisma };
@@ -21,7 +21,7 @@ describe("Geçiş doğrulama — eski C# verisinin çözülmesi (Task 13.1)", ()
     process.env.ENCRYPTION_KEY = DEFAULT_KEY;
   });
 
-  // Task 13.1 — Requirements 4.4, 15.4: fixture vektörleri doğrudan decrypt edilir
+  // Task 13.1 — Requirements 4.4, 15.4: fixture vectors are directly decrypted
   it(
     propertyLabel(
       3,
@@ -45,9 +45,9 @@ describe("Geçiş doğrulama — credential servis akışı (uçtan uca)", () =>
     process.env.ENCRYPTION_KEY = DEFAULT_KEY;
   });
 
-  // Task 13.1 — Requirements 4.4, 15.4: servis decrypt + maskeleme uçtan uca
+  // Task 13.1 — Requirements 4.4, 15.4: service decrypt + masking end-to-end
   it("eski DB'den gelen şifreli credential, servis listesinde doğru maskelenir", async () => {
-    // Eski sistemden taşınmış gibi: keyValue zaten C# uyumlu şifreli değer.
+    // As if migrated from old system: keyValue is already a C#-compatible encrypted value.
     const vector = compatVectors.find(
       (v) => v.key === DEFAULT_KEY && v.plaintext === "Bearer abc123",
     )!;
@@ -61,7 +61,7 @@ describe("Geçiş doğrulama — credential servis akışı (uçtan uca)", () =>
       },
     });
 
-    // Eski şifreli değeri doğrudan (encrypt çağırmadan) DB'ye yerleştir.
+    // Insert the legacy encrypted value directly (without calling encrypt) into the DB.
     await db.apiCredential.create({
       data: {
         apiIntegrationId: integration.id,
@@ -74,13 +74,13 @@ describe("Geçiş doğrulama — credential servis akışı (uçtan uca)", () =>
     const list = await credentialService.list(integration.id);
     expect(list).toHaveLength(1);
 
-    // Servis decrypt başarılı olduğu için maske "****" (çözülemeyen) değildir.
+    // Service successfully decrypted, so the mask is not "****" (unresolvable).
     const masked = list[0].keyValueMasked as string;
     expect(masked).not.toBe("****");
-    // Maskeli değer düz metnin baş/son karakterlerini yansıtır (maskSecret davranışı).
+    // Masked value reflects first/last chars of plaintext (maskSecret behavior).
     expect(masked.startsWith("Be")).toBe(true);
     expect(masked.endsWith("23")).toBe(true);
-    // Düz metin tam olarak sızdırılmaz.
+    // Full plaintext is not leaked.
     expect(masked).not.toBe(vector.plaintext);
   });
 });

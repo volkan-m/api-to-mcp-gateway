@@ -5,7 +5,7 @@ import {
   UpdateEndpointInput,
 } from "@/lib/validation/schemas";
 
-// Eski C# Create/Update/Delete ApiEndpointHandler ve ListApiEndpoints karşılığı.
+// Equivalent of old C# Create/Update/Delete ApiEndpointHandler and ListApiEndpoints.
 
 export const endpointService = {
   list(integrationId: string) {

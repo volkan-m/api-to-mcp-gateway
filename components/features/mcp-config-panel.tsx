@@ -46,7 +46,7 @@ export function McpConfigPanel({ integrationId }: { integrationId: string }) {
 
   const httpEndpoint = `${origin || "http://localhost:3000"}/api/mcp`;
 
-  // Hedef platforma göre üretilen yapılandırma (JSON).
+  // Generated configuration (JSON) based on target platform.
   const config = useMemo<Record<string, unknown>>(() => {
     if (target === "claude-desktop") {
       return {
@@ -60,7 +60,7 @@ export function McpConfigPanel({ integrationId }: { integrationId: string }) {
         },
       };
     }
-    // n8n / openai / anthropic: HTTP transport ile çalışır.
+    // n8n / openai / anthropic: works with HTTP transport.
     return {
       transport: "http",
       url: httpEndpoint,
@@ -93,8 +93,8 @@ export function McpConfigPanel({ integrationId }: { integrationId: string }) {
     }
   }, [target, t]);
 
-  // t() dizileri string döndürmez; doğrudan sözlükten almak için translations kullanmıyoruz,
-  // bu yüzden adımları translations üzerinden çekiyoruz (aşağıdaki useTranslationSteps).
+  // t() does not return arrays as strings; we pull the steps directly via useStepArray below
+  // instead of going through translations.
   const steps = useStepArray(target);
 
   const getToolsCode =
@@ -178,7 +178,7 @@ console.log(await res.json());`;
 
   return (
     <div className="space-y-4">
-      {/* Platform seçimi */}
+      {/* Platform selection */}
       <Card>
         <CardHeader>
           <CardTitle>{t("mcpConfig.platformSelection")}</CardTitle>
@@ -247,7 +247,7 @@ console.log(await res.json());`;
         </CardContent>
       </Card>
 
-      {/* HTTP endpoint bilgisi */}
+      {/* HTTP endpoint info */}
       <Card>
         <CardHeader>
           <CardTitle>{t("mcpConfig.httpEndpoint")}</CardTitle>
@@ -273,7 +273,7 @@ console.log(await res.json());`;
         </CardContent>
       </Card>
 
-      {/* Kurulum adımları */}
+      {/* Installation steps */}
       <Card>
         <CardHeader>
           <CardTitle>{t("mcpConfig.installationSteps")}</CardTitle>
@@ -287,7 +287,7 @@ console.log(await res.json());`;
         </CardContent>
       </Card>
 
-      {/* Config dosyası konumu (yalnızca Claude Desktop) */}
+      {/* Config file location (Claude Desktop only) */}
       {showOs && (
         <Card>
           <CardHeader>
@@ -301,7 +301,7 @@ console.log(await res.json());`;
         </Card>
       )}
 
-      {/* Yapılandırma JSON */}
+      {/* Configuration JSON */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("mcpConfig.configJson")}</CardTitle>
@@ -331,7 +331,7 @@ console.log(await res.json());`;
         </CardContent>
       </Card>
 
-      {/* Kod örnekleri (OpenAI / Anthropic) */}
+      {/* Code examples (OpenAI / Anthropic) */}
       {showCode && (
         <Card>
           <CardHeader>
@@ -383,7 +383,7 @@ console.log(await res.json());`;
   );
 }
 
-// Kurulum adımları dizisini locale'e göre döndüren yardımcı hook.
+// Helper hook that returns the installation steps array based on locale.
 import { useLocale } from "@/contexts/locale-context";
 import { getTranslations } from "@/lib/i18n";
 

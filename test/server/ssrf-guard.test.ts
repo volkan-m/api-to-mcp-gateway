@@ -4,10 +4,9 @@ import fc from "fast-check";
 import { propertyLabel } from "../helpers/property-label";
 import { FC_RUNS } from "../helpers/fast-check-config";
 
-// dns/promises.lookup mock'u — düz (vi.fn olmayan) mutable bir implementasyon
-// kullanılır. Böylece vitest'in vi.fn async-sonuç izlemesinin yarattığı
-// "phantom unhandled rejection" sorunu yaşanmaz; reddetme yalnızca
-// isSafeUrl'ün try/catch'i tarafından ele alınır.
+// dns/promises.lookup mock — uses a plain (non-vi.fn) mutable implementation.
+// This avoids the "phantom unhandled rejection" issue caused by vitest's vi.fn
+// async-result tracking; rejections are handled only by isSafeUrl's try/catch.
 let lookupImpl: (...args: unknown[]) => Promise<Array<{ address: string; family: number }>> =
   async () => [];
 
@@ -31,7 +30,7 @@ describe("ssrf-guard — birim testleri", () => {
     lookupImpl = async () => [];
   });
 
-  // Task 4.1 — Requirements 5.4: http/https dışı şema -> false
+  // Task 4.1 — Requirements 5.4: non-http/https scheme -> false
   it("http/https olmayan şema reddedilir", async () => {
     resolveTo("8.8.8.8");
     expect(await isSafeUrl("ftp://example.com")).toBe(false);
@@ -39,13 +38,13 @@ describe("ssrf-guard — birim testleri", () => {
     expect(await isSafeUrl("gopher://example.com")).toBe(false);
   });
 
-  // Task 4.1 — Requirements 5.5: geçersiz URL -> false
+  // Task 4.1 — Requirements 5.5: invalid URL -> false
   it("geçersiz URL reddedilir", async () => {
     expect(await isSafeUrl("not-a-url")).toBe(false);
     expect(await isSafeUrl("")).toBe(false);
   });
 
-  // Task 4.1 — Requirements 5.5: DNS hatası -> false (fail-closed)
+  // Task 4.1 — Requirements 5.5: DNS error -> false (fail-closed)
   it("DNS çözümleme hatasında false döner (fail-closed)", async () => {
     lookupImpl = async () => {
       throw new Error("ENOTFOUND");
@@ -82,7 +81,7 @@ describe("ssrf-guard — property-based testleri", () => {
       "∀ private/loopback/link-local IP'ye çözümlenen url -> false; ∀ http/https olmayan şema -> false",
     ),
     async () => {
-      // Private/loopback/link-local IPv4 üreticisi
+      // Private/loopback/link-local IPv4 generator
       const privateIpv4 = fc.oneof(
         fc.tuple(fc.constant(10), fc.nat(255), fc.nat(255), fc.nat(255)),
         fc.tuple(fc.constant(127), fc.nat(255), fc.nat(255), fc.nat(255)),
@@ -104,11 +103,11 @@ describe("ssrf-guard — property-based testleri", () => {
         { numRuns: FC_RUNS },
       );
 
-      // http/https olmayan şemalar her zaman false
+      // Non-http/https schemes are always false
       const badScheme = fc.constantFrom("ftp", "file", "gopher", "ws", "data");
       await fc.assert(
         fc.asyncProperty(badScheme, async (scheme) => {
-          resolveTo("93.184.216.34"); // IP güvenli olsa bile şema reddedilir
+          resolveTo("93.184.216.34"); // scheme is rejected even if IP is safe
           expect(await isSafeUrl(`${scheme}://example.com/x`)).toBe(false);
         }),
         { numRuns: FC_RUNS },

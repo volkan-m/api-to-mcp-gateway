@@ -4,13 +4,13 @@ import { MCPToolCall } from "@/lib/mcp/types";
 
 export const dynamic = "force-dynamic";
 
-// Birleşik MCP HTTP transport. Eski Express `http.ts` /mcp dispatcher'ının karşılığı.
-// X-Integration-Id header zorunludur. Desteklenen method'lar: listTools, callTool.
+// Combined MCP HTTP transport. Equivalent of the old Express `http.ts` /mcp dispatcher.
+// X-Integration-Id header is required. Supported methods: listTools, callTool.
 
-// Entegrasyon-bazlı tool önbelleği. Her entegrasyon için son yükleme zamanı
-// tutulur; TTL dolduğunda DB'den yeniden yüklenir. Bu sayede:
-//  - Farklı entegrasyonlar eşzamanlı çalışabilir (tek bir id'ye bağlı değil).
-//  - Tool/endpoint düzenlemeleri en geç TTL sonunda yansır (bayat tool sorunu).
+// Per-integration tool cache. Tracks last load time for each integration;
+// reloads from DB when TTL expires. This means:
+//  - Different integrations can run concurrently (not bound to a single id).
+//  - Tool/endpoint edits are reflected after at most TTL (stale tool issue).
 const TOOL_CACHE_TTL_MS = Number(process.env.MCP_TOOL_CACHE_TTL_MS ?? 5000);
 const lastLoadedAt = new Map<string, number>();
 
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET -> tool listesi (kolay test için)
+// GET -> tool list (for easy testing)
 export async function GET(req: NextRequest) {
   const integrationId = req.headers.get("x-integration-id");
   if (!integrationId) {

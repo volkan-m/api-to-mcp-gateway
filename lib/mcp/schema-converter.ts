@@ -1,6 +1,6 @@
-// OpenAPI schema -> MCP tool inputSchema dönüştürücü.
-// Mevcut MCP sunucusundaki mantık korunmuş, ek olarak hem camelCase (yeni TS extract)
-// hem PascalCase (eski C# extract) verisiyle uyumlu olacak şekilde sağlamlaştırılmıştır.
+// OpenAPI schema -> MCP tool inputSchema converter.
+// Existing MCP server logic preserved, additionally hardened to be compatible
+// with both camelCase (new TS extract) and PascalCase (legacy C# extract) data.
 
 interface OpenAPIParameter {
   name?: string;
@@ -30,7 +30,7 @@ export function convertOpenAPIToMCPSchema(openApiSchema: OpenAPIInputSchema): {
   const properties: Record<string, unknown> = {};
   const required: string[] = [];
 
-  // Parametreler (camelCase veya PascalCase)
+  // Parameters (camelCase or PascalCase)
   const params = openApiSchema.parameters ?? openApiSchema.Parameters;
   if (params && Array.isArray(params)) {
     params.forEach((param) => {
@@ -58,7 +58,7 @@ export function convertOpenAPIToMCPSchema(openApiSchema: OpenAPIInputSchema): {
     });
   }
 
-  // RequestBody (camelCase veya PascalCase)
+  // RequestBody (camelCase or PascalCase)
   const requestBodyData =
     (openApiSchema.RequestBody as Record<string, unknown> | undefined) ??
     (openApiSchema.requestBody as Record<string, unknown> | undefined);
@@ -92,7 +92,7 @@ export function convertOpenAPIToMCPSchema(openApiSchema: OpenAPIInputSchema): {
       typeof bodySchema.type === "string" &&
       bodySchema.type !== "object"
     ) {
-      // Primitive request body (örn: integer, string)
+      // Primitive request body (e.g.: integer, string)
       properties["body"] = {
         type: String(bodySchema.type).toLowerCase(),
         description: bodySchema.description ?? "Request body content",
@@ -100,7 +100,7 @@ export function convertOpenAPIToMCPSchema(openApiSchema: OpenAPIInputSchema): {
       };
       required.push("body");
     } else {
-      // Standart OpenAPI yapısı fallback
+      // Standard OpenAPI structure fallback
       const content = requestBodyData.content as
         | Record<string, { schema?: Record<string, unknown> }>
         | undefined;

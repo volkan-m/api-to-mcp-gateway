@@ -3,8 +3,8 @@ import { MCPTool, MCPToolCall, MCPToolResponse } from "./types";
 import { proxyApiCall } from "./api-proxy";
 import { convertOpenAPIToMCPSchema } from "./schema-converter";
 
-// MCP çekirdek sunucusu. Entegrasyon bazında tool map'i tutar.
-// Hem HTTP transport (app/api/mcp) hem stdio (mcp/stdio.ts) bu sınıfı kullanır.
+// MCP core server. Maintains a tool map per integration.
+// Both HTTP transport (app/api/mcp) and stdio (mcp/stdio.ts) use this class.
 
 export class MCPServer {
   private integrationTools: Map<string, Map<string, MCPTool>> = new Map();
@@ -118,7 +118,7 @@ export class MCPServer {
   }
 }
 
-// HTTP transport için singleton (serverless'ta süreç başına yeniden kullanılır).
+// Singleton for HTTP transport (reused per process in serverless).
 const globalForMcp = globalThis as unknown as { mcpServer?: MCPServer };
 export const mcpServer = globalForMcp.mcpServer ?? new MCPServer();
 if (process.env.NODE_ENV !== "production") {

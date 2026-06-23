@@ -3,14 +3,14 @@ import fc from "fast-check";
 import { propertyLabel } from "../helpers/property-label";
 import { FC_RUNS } from "../helpers/fast-check-config";
 
-// @/lib/db mock'u — paylaşılan singleton db-mock üzerinden.
+// @/lib/db mock — via shared singleton db-mock.
 vi.mock("@/lib/db", async () => {
   const mod = await import("../helpers/db-mock");
   return { prisma: mod.mockPrisma };
 });
 
-// SSRF guard'ı mock'la: URL indirme testlerinde DNS'e gitmeden deterministik
-// güvenli/güvensiz kararı verdirebilmek için.
+// Mock the SSRF guard: to give deterministic safe/unsafe decisions in URL download
+// tests without hitting DNS.
 let safeUrlImpl: (url: string) => Promise<boolean> = async () => true;
 vi.mock("@/lib/server/ssrf-guard", () => ({
   isSafeUrl: (url: string) => safeUrlImpl(url),
@@ -74,7 +74,7 @@ describe("spec-service — birim testleri", () => {
     safeUrlImpl = async () => true;
   });
 
-  // Task 5.1 — Requirements 5.1: geçerli openapi3 içerik parse edilip ApiSpec oluşturur
+  // Task 5.1 — Requirements 5.1: valid openapi3 content is parsed and ApiSpec is created
   it("geçerli openapi3 içeriği ApiSpec olarak kaydeder", async () => {
     const integrationId = await seedIntegration();
     const specId = await specService.uploadSpec(integrationId, OPENAPI3);
@@ -93,7 +93,7 @@ describe("spec-service — birim testleri", () => {
     expect(stored!.format).toBe("swagger2");
   });
 
-  // Task 5.1 — Requirements 5.2: geçersiz spec SPEC_PARSE_ERROR fırlatır, kayıt oluşmaz
+  // Task 5.1 — Requirements 5.2: invalid spec throws SPEC_PARSE_ERROR, no record created
   it("geçersiz spec içeriğinde SPEC_PARSE_ERROR fırlatır ve kayıt oluşmaz", async () => {
     const integrationId = await seedIntegration();
     await expect(
@@ -110,7 +110,7 @@ describe("spec-service — birim testleri", () => {
     expect(db.apiSpec.rows).toHaveLength(0);
   });
 
-  // Task 5.1 — Requirements 5.3, 5.6: SSRF reddinde SSRF_BLOCKED, indirme yapılmaz
+  // Task 5.1 — Requirements 5.3, 5.6: SSRF rejection throws SSRF_BLOCKED, no download performed
   it("SSRF reddinde SSRF_BLOCKED fırlatır ve indirme/kayıt yapılmaz", async () => {
     const integrationId = await seedIntegration();
     safeUrlImpl = async () => false;
@@ -132,7 +132,7 @@ describe("spec-service — endpoint çıkarma idempotansı (property)", () => {
     safeUrlImpl = async () => true;
   });
 
-  // Task 5.2 — Property 6: Endpoint çıkarma idempotansı — Validates: Requirements 6.3
+  // Task 5.2 — Property 6: Endpoint extraction idempotency — Validates: Requirements 6.3
   it(
     propertyLabel(
       6,
@@ -141,7 +141,7 @@ describe("spec-service — endpoint çıkarma idempotansı (property)", () => {
     async () => {
       await fc.assert(
         fc.asyncProperty(
-          // Rastgele sayıda path/method kombinasyonu üret
+          // Generate a random number of path/method combinations
           fc.array(
             fc.record({
               path: fc
@@ -155,7 +155,7 @@ describe("spec-service — endpoint çıkarma idempotansı (property)", () => {
             db._reset();
             const integrationId = await seedIntegration();
 
-            // Benzersiz (method, path) kombinasyonlarından bir OpenAPI dokümanı kur
+            // Build an OpenAPI document from unique (method, path) combinations
             const paths: Record<string, Record<string, unknown>> = {};
             for (const op of ops) {
               paths[op.path] = paths[op.path] ?? {};
@@ -185,11 +185,11 @@ describe("spec-service — endpoint çıkarma idempotansı (property)", () => {
                 .sort((a, b) => (a.method + a.path).localeCompare(b.method + b.path)),
             );
 
-            // Sayı ve içerik iki çalıştırma arasında değişmez
+            // Count and content do not change between two runs
             expect(secondCount).toBe(firstCount);
             expect(secondRows).toBe(firstRows);
 
-            // inputSchema her zaman geçerli JSON
+            // inputSchema is always valid JSON
             for (const row of db.endpoint.rows) {
               expect(() => JSON.parse(row.inputSchema)).not.toThrow();
             }

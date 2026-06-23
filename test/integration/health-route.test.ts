@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { GET } from "@/app/api/health/route";
 
-// Task 12 — eski StartUpController (/startup/init) eşdeğeri olarak eklenen
-// minimal liveness ucunun testi.
+// Task 12 — test for the minimal liveness endpoint added as equivalent
+// of the old StartUpController (/startup/init).
 describe("health route — liveness ucu (Task 12)", () => {
   it("GET /api/health 200 ve status:ok döner", async () => {
     const res = await GET();

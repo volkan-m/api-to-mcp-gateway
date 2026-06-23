@@ -5,8 +5,8 @@ import { propertyLabel } from "../helpers/property-label";
 import { FC_RUNS } from "../helpers/fast-check-config";
 import { encrypt } from "@/lib/server/crypto";
 
-// api-proxy için hassas kontrol gerektiren inline prisma mock.
-// (Shared db-mock include desteklemediği için burada doğrudan kontrol edilir.)
+// Inline prisma mock requiring fine-grained control for api-proxy.
+// (Shared db-mock does not support include, so it is controlled directly here.)
 interface MockEndpoint {
   id: string;
   apiIntegrationId: string;
@@ -82,7 +82,7 @@ describe("api-proxy — birim/entegrasyon testleri", () => {
     nock.cleanAll();
   });
 
-  // Task 9.1 — Requirements 10.1: test ortamında test base URL seçilir
+  // Task 9.1 — Requirements 10.1: test base URL is selected in test environment
   it("test ortamında test base URL kullanılır, path/query parametreleri doldurulur", async () => {
     seedEndpoint();
     const scope = nock("https://test.example.com")
@@ -96,7 +96,7 @@ describe("api-proxy — birim/entegrasyon testleri", () => {
     expect(scope.isDone()).toBe(true);
   });
 
-  // Task 9.1 — Requirements 10.1: prod ortamında prod base URL seçilir
+  // Task 9.1 — Requirements 10.1: prod base URL is selected in prod environment
   it("prod ortamında prod base URL kullanılır", async () => {
     seedEndpoint({ apiIntegration: { id: "int1", activeEnv: "prod", baseUrlProd: "https://prod.example.com", baseUrlTest: "https://test.example.com" } });
     const scope = nock("https://prod.example.com").get("/items/7").reply(200, { env: "prod" });
@@ -106,7 +106,7 @@ describe("api-proxy — birim/entegrasyon testleri", () => {
     expect(scope.isDone()).toBe(true);
   });
 
-  // Task 9.1 — Requirements 10.3: hedef 4xx/5xx status+data ile aynen döner
+  // Task 9.1 — Requirements 10.3: target 4xx/5xx is returned as-is with status+data
   it("hedef API 404 yanıtı status+data ile aynen döndürülür", async () => {
     seedEndpoint();
     nock("https://test.example.com")
@@ -119,7 +119,7 @@ describe("api-proxy — birim/entegrasyon testleri", () => {
     expect(res.data).toEqual({ error: "not found" });
   });
 
-  // Task 9.1 — Requirements 10.5: bağlantı hatası fırlatılır
+  // Task 9.1 — Requirements 10.5: connection error is thrown
   it("bağlantı hatasında (response yok) hata fırlatılır", async () => {
     seedEndpoint();
     nock("https://test.example.com")
@@ -130,7 +130,7 @@ describe("api-proxy — birim/entegrasyon testleri", () => {
     await expect(proxyApiCall("int1", "ep1", { id: "1" })).rejects.toBeTruthy();
   });
 
-  // Task 9.1 — Requirements 10.4: POST gövdesi geçirilir
+  // Task 9.1 — Requirements 10.4: POST body is passed through
   it("POST için kalan args request body olarak gönderilir", async () => {
     seedEndpoint({
       method: "POST",
@@ -155,7 +155,7 @@ describe("api-proxy — property: ortam seçimi (Property 9)", () => {
   });
   afterEach(() => nock.cleanAll());
 
-  // Task 9.2 — Property 9: Proxy ortam seçimi — Validates: Requirements 10.1
+  // Task 9.2 — Property 9: Proxy environment selection — Validates: Requirements 10.1
   it(
     propertyLabel(
       9,
@@ -203,8 +203,8 @@ describe("api-proxy — property: yetki önceliği (Property 10)", () => {
     delete process.env.BEARER_TOKEN;
   });
 
-  // Task 9.3 — Property 10: Yetki önceliği — Validates: Requirements 10.2
-  // Sıra: args.bearerToken > customHeaders.Authorization > DB credential > BEARER_TOKEN env
+  // Task 9.3 — Property 10: Auth priority — Validates: Requirements 10.2
+  // Order: args.bearerToken > customHeaders.Authorization > DB credential > BEARER_TOKEN env
   it(
     propertyLabel(
       10,
@@ -246,7 +246,7 @@ describe("api-proxy — property: yetki önceliği (Property 10)", () => {
             }
             if (hasEnv) process.env.BEARER_TOKEN = envToken;
 
-            // Beklenen Authorization değeri (öncelik sırasına göre)
+            // Expected Authorization value (in priority order)
             let expected: string | undefined;
             if (hasArgsToken) expected = `Bearer ${argsToken}`;
             else if (hasCustomHeader) expected = headerAuth;

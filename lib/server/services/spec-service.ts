@@ -7,8 +7,8 @@ import {
   buildOutputSchema,
 } from "@/lib/server/spec-parser";
 
-// Eski C# UploadApiSpecHandler / DownloadApiSpecFromUrlHandler /
-// ExtractEndpointsFromSpecHandler karşılığı.
+// Equivalent of old C# UploadApiSpecHandler / DownloadApiSpecFromUrlHandler /
+// ExtractEndpointsFromSpecHandler.
 
 export const specService = {
   list(integrationId: string) {
@@ -79,8 +79,8 @@ export const specService = {
     return spec.id;
   },
 
-  // Endpoint çıkarma. Eski C# davranışından farkı: idempotent olması için
-  // (apiIntegrationId, method, path) benzersizliği üzerinden upsert kullanır.
+  // Endpoint extraction. Difference from old C# behavior: uses upsert over
+  // (apiIntegrationId, method, path) uniqueness to be idempotent.
   async extractEndpoints(
     integrationId: string,
     specId: string,

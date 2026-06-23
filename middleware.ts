@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Hafif kimlik doğrulama katmanı.
+// Lightweight authentication layer.
 //
-// Davranış:
-//  - AUTH_TOKEN ortam değişkeni TANIMLI DEĞİLSE auth devre dışıdır (geliştirme
-//    kolaylığı için her şey serbest). Production'da MUTLAKA ayarlanmalıdır.
-//  - Tanımlıysa:
-//      * Yönetim arayüzü sayfaları: geçerli oturum çerezi yoksa /login'e yönlendirir.
-//      * /api/** (auth uçları hariç): cookie VEYA X-API-Key header'ı AUTH_TOKEN ile
-//        eşleşmezse 401 döner.
+// Behavior:
+//  - If AUTH_TOKEN env variable is NOT DEFINED, auth is disabled (everything
+//    is open for development convenience). MUST be set in production.
+//  - If defined:
+//      * Management UI pages: redirects to /login if no valid session cookie.
+//      * /api/** (except auth endpoints): returns 401 if cookie OR X-API-Key header
+//        does not match AUTH_TOKEN.
 //
-// Not: middleware Edge runtime'da çalışır; bu yüzden sadece basit string
-// karşılaştırması yapılır (kripto yok).
+// Note: middleware runs on Edge runtime; only simple string
+// comparison is performed (no crypto).
 
 const COOKIE_NAME = "mcp_auth";
 
@@ -27,12 +27,12 @@ function isAuthed(req: NextRequest, token: string): boolean {
 
 export function middleware(req: NextRequest) {
   const token = process.env.AUTH_TOKEN;
-  // Auth devre dışı.
+  // Auth disabled.
   if (!token) return NextResponse.next();
 
   const { pathname } = req.nextUrl;
 
-  // Her zaman serbest yollar.
+  // Always-open paths.
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth")
@@ -42,7 +42,7 @@ export function middleware(req: NextRequest) {
 
   const authed = isAuthed(req, token);
 
-  // API uçları: JSON 401.
+  // API endpoints: JSON 401.
   if (pathname.startsWith("/api/")) {
     if (authed) return NextResponse.next();
     return NextResponse.json(
@@ -51,7 +51,7 @@ export function middleware(req: NextRequest) {
     );
   }
 
-  // Yönetim arayüzü: login'e yönlendir.
+  // Management UI: redirect to login.
   if (!authed) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";

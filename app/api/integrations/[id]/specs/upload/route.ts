@@ -5,7 +5,7 @@ import { handleError, ok } from "@/lib/server/http";
 
 type Params = { params: Promise<{ id: string }> };
 
-// POST /api/integrations/[id]/specs/upload -> içerik ile spec yükle
+// POST /api/integrations/[id]/specs/upload -> upload spec with content
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params;

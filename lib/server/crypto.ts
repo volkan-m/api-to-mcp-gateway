@@ -1,13 +1,13 @@
 import crypto from "crypto";
 import { AppError } from "./errors";
 
-// AES-256-CBC şifreleme. C# `EncryptionService` ile BİREBİR uyumludur:
-//  - Anahtar: ENCRYPTION_KEY ortam değişkeni, 32 karaktere boşlukla padlenir (PadRight)
-//    ve ilk 32 karakter UTF-8 olarak alınır (Substring(0,32)).
-//  - Çıktı formatı: "HEX(iv):HEX(ciphertext)" (C# Convert.ToHexString -> BÜYÜK harf).
+// AES-256-CBC encryption. EXACTLY compatible with C# `EncryptionService`:
+//  - Key: ENCRYPTION_KEY env var, padded to 32 chars with spaces (PadRight)
+//    and first 32 characters taken as UTF-8 (Substring(0,32)).
+//  - Output format: "HEX(iv):HEX(ciphertext)" (C# Convert.ToHexString -> UPPERCASE).
 //
-// Bu uyum kritiktir: mevcut veritabanındaki keyValue kayıtları C# ile şifrelenmiştir
-// ve bu fonksiyonlarla çözülebilmelidir.
+// This compatibility is critical: existing keyValue records in the database were
+// encrypted with C# and must be decryptable with these functions.
 
 const ALGORITHM = "aes-256-cbc";
 const DEFAULT_KEY = "default_encryption_key_32_chars_!!";
@@ -57,7 +57,7 @@ export function decrypt(encrypted: string): string {
   }
 }
 
-// Liste/yanıtlarda credential değerini maskelemek için yardımcı.
+// Helper for masking credential values in listings/responses.
 export function maskSecret(value: string): string {
   if (!value) return "";
   if (value.length <= 4) return "****";

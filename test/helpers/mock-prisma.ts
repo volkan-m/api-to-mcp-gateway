@@ -1,20 +1,20 @@
 import { randomUUID } from "crypto";
 
-// Hafif, bellek-içi Prisma taklidi. Servis testlerinin gerçekçi
-// upsert/findUnique/benzersizlik davranışına ihtiyacı vardır (özellikle
-// endpoint çıkarma idempotansı ve benzersizlik değişmezleri için).
+// Lightweight, in-memory Prisma mock. Service tests need realistic
+// upsert/findUnique/uniqueness behavior (especially for
+// endpoint extraction idempotency and uniqueness invariants).
 //
-// Yalnızca servislerin kullandığı modeller/operasyonlar desteklenir:
+// Only models/operations used by services are supported:
 //   apiIntegration, apiCredential, apiSpec, endpoint, toolSelection
 //
-// Kullanım:
+// Usage:
 //   const db = createMockPrisma();
-//   vi.mock("@/lib/db", () => ({ prisma: db }));  // (factory hoisting'e dikkat)
+//   vi.mock("@/lib/db", () => ({ prisma: db }));  // (be careful with factory hoisting)
 
 type Row = Record<string, any>;
 
 interface CompoundKeyConfig {
-  // örn: { apiIntegrationId_method_path: ["apiIntegrationId", "method", "path"] }
+  // e.g.: { apiIntegrationId_method_path: ["apiIntegrationId", "method", "path"] }
   [compoundName: string]: string[];
 }
 
@@ -27,7 +27,7 @@ class ModelStore {
 
   private matchWhere(row: Row, where: Row): boolean {
     return Object.entries(where).every(([k, v]) => {
-      // Compound key nesnesi (örn. apiIntegrationId_method_path: {...})
+      // Compound key object (e.g. apiIntegrationId_method_path: {...})
       if (this.compoundKeys[k] && v && typeof v === "object") {
         return this.compoundKeys[k].every((field) => row[field] === v[field]);
       }
@@ -60,7 +60,7 @@ class ModelStore {
       updatedAt: new Date(),
       ...data,
     };
-    // Benzersizlik kontrolü
+    // Uniqueness check
     for (const field of this.uniqueFields) {
       if (field === "id") continue;
       if (this.rows.some((r) => r[field] === row[field] && row[field] !== undefined)) {
@@ -102,7 +102,7 @@ class ModelStore {
     return { ...removed };
   }
 
-  // include desteği için: testler gerekirse manuel olarak ilişki kurar.
+  // For include support: tests can manually wire up relations if needed.
 }
 
 export interface MockPrisma {

@@ -5,8 +5,8 @@ import {
   UpdateIntegrationInput,
 } from "@/lib/validation/schemas";
 
-// Eski C# CreateApiIntegrationHandler / Update / Delete / Query handler'larının
-// TypeScript karşılığı. Tek iş mantığı kaynağı.
+// TypeScript equivalent of the old C# CreateApiIntegrationHandler / Update / Delete / Query handlers.
+// Single source of business logic.
 
 export const integrationService = {
   list() {

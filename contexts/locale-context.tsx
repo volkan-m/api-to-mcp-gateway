@@ -11,22 +11,22 @@ interface LocaleContextType {
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 
 function detectBrowserLocale(): Locale {
-  // Önce localStorage'dan kontrol et
+  // Check localStorage first
   const savedLocale = localStorage.getItem("locale") as Locale | null;
   if (savedLocale && locales.includes(savedLocale)) {
     return savedLocale;
   }
 
-  // Tarayıcı dilini algıla
+  // Detect browser language
   if (typeof navigator !== "undefined") {
     const browserLang = navigator.language?.toLowerCase() || "";
 
-    // Tam eşleşme kontrolü (örn: tr-TR -> tr)
+    // Exact match check (e.g.: tr-TR -> tr)
     if (browserLang.startsWith("tr")) {
       return "tr";
     }
 
-    // Varsa parent dil eşleştir (örn: en-US -> en)
+    // Match parent language if available (e.g.: en-US -> en)
     const parentLang = browserLang.split("-")[0]?.toLowerCase();
     if (parentLang && locales.includes(parentLang as Locale)) {
       return parentLang as Locale;

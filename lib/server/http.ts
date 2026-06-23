@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { AppError, isAppError } from "./errors";
 
-// Route Handler'lar için ortak hata -> HTTP yanıt eşlemesi.
+// Common error -> HTTP response mapping for Route Handlers.
 export function handleError(error: unknown): NextResponse {
   if (error instanceof ZodError) {
     return NextResponse.json(

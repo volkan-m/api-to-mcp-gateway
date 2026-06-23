@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
-// Geliştirmede hot-reload sırasında birden fazla PrismaClient örneği
-// oluşmasını engellemek için global singleton.
+// Global singleton to prevent multiple PrismaClient instances
+// from being created during hot-reload in development.
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };

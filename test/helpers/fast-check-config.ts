@@ -1,7 +1,7 @@
 import type { Parameters as FcParameters } from "fast-check";
 
-// Property-based testler için ortak fast-check yapılandırması.
-// En az 100 iterasyon (tasarım/Requirement 14.3 gereği).
+// Common fast-check configuration for property-based tests.
+// At least 100 iterations (required by design/Requirement 14.3).
 export const FC_RUNS = 100;
 
 export const fcConfig: FcParameters<unknown> = {

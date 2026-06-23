@@ -1,7 +1,7 @@
-// Her property-based testi tasarımdaki ilgili doğruluk özelliğine bağlayan
-// standart etiket üreticisi.
+// Standard label generator that links each property-based test to the relevant
+// correctness property in the design.
 //
-// Biçim: "Feature: mcp-gateway-nextjs-consolidation, Property {number}: {property_text}"
+// Format: "Feature: mcp-gateway-nextjs-consolidation, Property {number}: {property_text}"
 
 const FEATURE = "mcp-gateway-nextjs-consolidation";
 

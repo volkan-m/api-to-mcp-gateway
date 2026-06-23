@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   }
 }
 
-// POST /api/integrations/[id]/tools -> tool seçimi upsert
+// POST /api/integrations/[id]/tools -> upsert tool selection
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params;

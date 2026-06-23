@@ -7,8 +7,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { MCPServer } from "../lib/mcp/server";
 
-// stdio MCP transport (Claude Desktop / Cursor). Tek bir INTEGRATION_ID için çalışır.
-// Çalıştırma: INTEGRATION_ID=<id> tsx mcp/stdio.ts
+// stdio MCP transport (Claude Desktop / Cursor). Works for a single INTEGRATION_ID.
+// Run: INTEGRATION_ID=<id> tsx mcp/stdio.ts
 
 const INTEGRATION_ID = process.env.INTEGRATION_ID;
 if (!INTEGRATION_ID) {
@@ -35,7 +35,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     },
     INTEGRATION_ID!,
   );
-  // SDK sonuç tipi birliğiyle uyum için cast (MCPToolResponse content döner).
+  // Cast for compatibility with SDK result type union (MCPToolResponse returns content).
   return result as unknown as Record<string, unknown>;
 });
 

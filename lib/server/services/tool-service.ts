@@ -2,8 +2,8 @@ import { prisma } from "@/lib/db";
 import { AppError } from "@/lib/server/errors";
 import { UpsertToolInput } from "@/lib/validation/schemas";
 
-// Eski C# UpsertApiToolSelectionHandler / DeleteApiToolSelectionHandler /
-// ListApiToolSelections karşılığı. (apiIntegrationId, endpointId) benzersizdir.
+// Equivalent of old C# UpsertApiToolSelectionHandler / DeleteApiToolSelectionHandler /
+// ListApiToolSelections. (apiIntegrationId, endpointId) is unique.
 
 export const toolService = {
   list(integrationId: string) {

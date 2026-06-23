@@ -40,7 +40,7 @@ async function seedEndpoint(integrationId: string, method = "GET", path = "/x"):
 describe("tool-service — birim testleri", () => {
   beforeEach(() => db._reset());
 
-  // Task 6.1 — Requirements 7.1: upsert tool seçimi oluşturur
+  // Task 6.1 — Requirements 7.1: upsert creates a tool selection
   it("upsert yeni bir tool seçimi oluşturur", async () => {
     const integrationId = await seedIntegration();
     const endpointId = await seedEndpoint(integrationId);
@@ -55,7 +55,7 @@ describe("tool-service — birim testleri", () => {
     expect(stored!.toolName).toBe("get_x");
   });
 
-  // Task 6.1 — Requirements 7.3: boş toolName reddedilir (Zod)
+  // Task 6.1 — Requirements 7.3: empty toolName rejected (Zod)
   it("boş toolName reddedilir (Zod)", () => {
     const result = upsertToolSchema.safeParse({
       endpointId: "e1",
@@ -64,7 +64,7 @@ describe("tool-service — birim testleri", () => {
     expect(result.success).toBe(false);
   });
 
-  // Task 6.1 — Requirements 7.4: enabled varsayılanı true
+  // Task 6.1 — Requirements 7.4: enabled defaults to true
   it("enabled varsayılanı true'dur (Zod default)", () => {
     const result = upsertToolSchema.parse({
       endpointId: "e1",
@@ -88,7 +88,7 @@ describe("tool-service — birim testleri", () => {
 describe("benzersizlik değişmezleri — property-based", () => {
   beforeEach(() => db._reset());
 
-  // Task 6.2 — Property 7: Benzersizlik değişmezleri — Validates: Requirements 8.1, 8.2
+  // Task 6.2 — Property 7: Uniqueness invariants — Validates: Requirements 8.1, 8.2
   it(
     propertyLabel(
       7,
@@ -108,7 +108,7 @@ describe("benzersizlik değişmezleri — property-based", () => {
             db._reset();
             const integrationId = await seedIntegration();
 
-            // (method, path) için ilk endpoint oluşturulur; tekrarlar CONFLICT verir.
+            // First endpoint for (method, path) is created; repeats yield CONFLICT.
             const endpointId = await endpointService.create(integrationId, {
               method: method as never,
               path,
@@ -124,10 +124,10 @@ describe("benzersizlik değişmezleri — property-based", () => {
                 } as never),
               ).rejects.toMatchObject({ code: "CONFLICT" });
             }
-            // Tek endpoint kaydı (benzersiz method+path)
+            // Single endpoint record (unique method+path)
             expect(db.endpoint.rows).toHaveLength(1);
 
-            // Aynı (integration, endpoint) için tekrarlı upsert tek kayıt üretir (idempotent)
+            // Repeated upsert for the same (integration, endpoint) produces a single record (idempotent)
             for (let i = 0; i < repeats; i++) {
               await toolService.upsert(integrationId, {
                 endpointId,

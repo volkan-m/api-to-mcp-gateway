@@ -67,7 +67,7 @@ describe("crypto — property-based testleri", () => {
     process.env.ENCRYPTION_KEY = DEFAULT_KEY;
   });
 
-  // Task 2.2 — Property 1: Şifreleme round-trip — Validates: Requirements 3.4
+  // Task 2.2 — Property 1: Encryption round-trip — Validates: Requirements 3.4
   it(
     propertyLabel(1, "∀ metin s, decrypt(encrypt(s)) === s"),
     () => {
@@ -80,7 +80,7 @@ describe("crypto — property-based testleri", () => {
     },
   );
 
-  // Task 2.3 — Property 2: Şifreleme gizliliği — Validates: Requirements 3.2, 3.3
+  // Task 2.3 — Property 2: Encryption confidentiality — Validates: Requirements 3.2, 3.3
   it(
     propertyLabel(
       2,
@@ -94,21 +94,21 @@ describe("crypto — property-based testleri", () => {
             const out1 = encrypt(plaintext);
             const out2 = encrypt(plaintext);
 
-            // Format: büyük harf HEX:HEX
+            // Format: uppercase HEX:HEX
             expect(out1).toMatch(HEX_PAIR);
 
-            // Gizlilik: düz metnin bayt dizisi şifreli kısımda yer almaz.
-            // (Hex karşılaştırması yapılır; tek karakterlerin hex gösteriminde
-            // tesadüfen eşleşmesini önlemek için en az 4 karakterlik girdi.)
+            // Confidentiality: the plaintext byte sequence is not present in the ciphertext.
+            // (Comparison is done in hex; at least 4-char input to avoid accidental
+            // single-character hex collisions.)
             const plaintextHex = Buffer.from(plaintext, "utf8")
               .toString("hex")
               .toUpperCase();
             const ciphertextHex = out1.split(":")[1];
             expect(ciphertextHex).not.toContain(plaintextHex);
 
-            // Rastgele IV => aynı girdi farklı çıktı
+            // Random IV => same input produces different output
             expect(out1).not.toBe(out2);
-            // Yine de ikisi de aynı düz metne çözülür
+            // Both still decrypt to the same plaintext
             expect(decrypt(out1)).toBe(plaintext);
             expect(decrypt(out2)).toBe(plaintext);
           },
@@ -118,14 +118,14 @@ describe("crypto — property-based testleri", () => {
     },
   );
 
-  // Task 2.4 — Property 3: C# uyumu (GEÇİŞ KRİTİK) — Validates: Requirements 4.2
+  // Task 2.4 — Property 3: C# compatibility (MIGRATION CRITICAL) — Validates: Requirements 4.2
   it(
     propertyLabel(
       3,
       "∀ C# ile şifrelenmiş e, decrypt(e) orijinal düz metni döndürür",
     ),
     () => {
-      // Tüm uyum vektörlerini tablolaştırarak çöz.
+      // Decrypt all compatibility vectors.
       for (const vector of compatVectors) {
         process.env.ENCRYPTION_KEY = vector.key;
         expect(decrypt(vector.encrypted)).toBe(vector.plaintext);
@@ -133,7 +133,7 @@ describe("crypto — property-based testleri", () => {
     },
   );
 
-  // Task 2.4 — Requirements 4.1, 4.3: anahtar türetimi C# ile aynı
+  // Task 2.4 — Requirements 4.1, 4.3: key derivation is the same as C#
   it("env tanımsızken DEFAULT_KEY ile üretilmiş vektör çözülebilir (Requirement 4.3)", () => {
     delete process.env.ENCRYPTION_KEY;
     const defaultVector = compatVectors.find(

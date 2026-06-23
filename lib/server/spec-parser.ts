@@ -1,8 +1,8 @@
 import yaml from "js-yaml";
 import { AppError } from "./errors";
 
-// OpenAPI/Swagger spec parse katmanı. C# `SpecParserService`'in (Microsoft.OpenApi)
-// yerini alır. JSON veya YAML içeriğini parse eder, temel doğrulamayı yapar.
+// OpenAPI/Swagger spec parse layer. Replaces C# `SpecParserService` (Microsoft.OpenApi).
+// Parses JSON or YAML content, performs basic validation.
 
 export interface ParsedOperation {
   method: string; // GET, POST, ...
@@ -31,7 +31,7 @@ function parseRaw(content: string): Record<string, unknown> {
   }
 
   try {
-    // JSON veya YAML: js-yaml JSON'u da parse edebilir.
+    // JSON or YAML: js-yaml can also parse JSON.
     const doc = yaml.load(trimmed);
     if (!doc || typeof doc !== "object") {
       throw new Error("Geçersiz doküman kökü");
@@ -46,15 +46,15 @@ function parseRaw(content: string): Record<string, unknown> {
   }
 }
 
-// Yerel ($/components, $/definitions ...) `$ref` referanslarını çözer.
-// C# `OpenApiStringReader` ref'leri otomatik çözdüğü için, üretilen tool
-// şemalarının dolu olması adına aynı davranışı sağlamak zorundayız. Aksi halde
-// requestBody/parameter şemaları `{ "$ref": ... }` olarak kalır ve
-// schema-converter boş `properties` üretir.
+// Resolves local ($/, components, definitions...) `$ref` references.
+// Because C# `OpenApiStringReader` resolves refs automatically, we must provide
+// the same behavior so generated tool schemas are fully populated. Otherwise
+// requestBody/parameter schemas remain as `{ "$ref": ... }` and
+// schema-converter produces empty `properties`.
 function resolveRefs(root: Record<string, unknown>): Record<string, unknown> {
-  // JSON Pointer (#/a/b/c) çözümü
+  // JSON Pointer (#/a/b/c) resolution
   function getByPointer(ref: string): unknown {
-    if (!ref.startsWith("#/")) return undefined; // yalnızca yerel ref
+    if (!ref.startsWith("#/")) return undefined; // local refs only
     const parts = ref
       .slice(2)
       .split("/")
@@ -79,16 +79,16 @@ function resolveRefs(root: Record<string, unknown>): Record<string, unknown> {
       const ref = obj["$ref"];
 
       if (typeof ref === "string") {
-        // Döngü koruması: aynı ref tekrar görülürse kır.
+        // Cycle guard: if the same ref is seen again, break.
         if (stack.has(ref)) return {};
         const target = getByPointer(ref);
-        if (target === undefined) return obj; // çözülemeyen/dış ref: olduğu gibi bırak
+        if (target === undefined) return obj; // unresolvable/external ref: leave as-is
 
         const nextStack = new Set(stack);
         nextStack.add(ref);
         const resolved = walk(target, nextStack);
 
-        // $ref dışındaki kardeş anahtarları (nadir) koru.
+        // Preserve sibling keys other than $ref (rare).
         const siblings: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(obj)) {
           if (k !== "$ref") siblings[k] = walk(v, stack);
@@ -113,7 +113,7 @@ function resolveRefs(root: Record<string, unknown>): Record<string, unknown> {
 
 export function parseSpec(content: string): ParsedSpec {
   const rawDoc = parseRaw(content);
-  // C# OpenApiStringReader gibi tüm yerel $ref'leri çöz.
+  // Resolve all local $refs like C# OpenApiStringReader.
   const doc = resolveRefs(rawDoc);
 
   const isOpenApi3 = typeof doc.openapi === "string";
@@ -135,7 +135,7 @@ export function parseSpec(content: string): ParsedSpec {
     if (!pathItemRaw || typeof pathItemRaw !== "object") continue;
     const pathItem = pathItemRaw as Record<string, unknown>;
 
-    // Path seviyesi ortak parametreler
+    // Path-level common parameters
     const pathLevelParams = Array.isArray(pathItem.parameters)
       ? (pathItem.parameters as unknown[])
       : [];
@@ -170,8 +170,8 @@ export function parseSpec(content: string): ParsedSpec {
   };
 }
 
-// Bir operasyon için Endpoint.inputSchema olarak saklanacak normalize JSON üretir.
-// Standart OpenAPI yapısını korur (schema-converter bu yapıyı doğrudan anlar).
+// Generates normalized JSON to be stored as Endpoint.inputSchema for an operation.
+// Preserves standard OpenAPI structure (schema-converter understands this directly).
 export function buildInputSchema(operation: ParsedOperation): string {
   return JSON.stringify({
     parameters: operation.parameters ?? [],

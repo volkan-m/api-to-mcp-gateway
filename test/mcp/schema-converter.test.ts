@@ -5,7 +5,7 @@ import { propertyLabel } from "../helpers/property-label";
 import { FC_RUNS } from "../helpers/fast-check-config";
 
 describe("schema-converter — birim testleri", () => {
-  // Task 7.1 — Requirements 11.2: yalnızca query/path parametreleri eklenir
+  // Task 7.1 — Requirements 11.2: only query/path parameters are added
   it("yalnızca in:query|path parametreleri properties'e eklenir", () => {
     const result = convertOpenAPIToMCPSchema({
       parameters: [
@@ -32,7 +32,7 @@ describe("schema-converter — birim testleri", () => {
     expect(result.required).not.toContain("q");
   });
 
-  // Task 7.1 — Requirements 11.4: required tekilleştirilir
+  // Task 7.1 — Requirements 11.4: required is deduplicated
   it("required dizisinde yinelenen değer bulunmaz", () => {
     const result = convertOpenAPIToMCPSchema({
       parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
@@ -72,7 +72,7 @@ describe("schema-converter — birim testleri", () => {
 });
 
 describe("schema-converter — property-based testleri", () => {
-  // Task 7.2 — Property 12: Schema dönüşümü değişmezi — Validates: Requirements 11.1, 11.3
+  // Task 7.2 — Property 12: Schema conversion invariant — Validates: Requirements 11.1, 11.3
   it(
     propertyLabel(
       12,
@@ -87,7 +87,7 @@ describe("schema-converter — property-based testleri", () => {
 
       fc.assert(
         fc.property(fc.array(paramArb, { maxLength: 10 }), (params) => {
-          // Benzersiz isimler (aynı isimli farklı 'in' tesadüfünü önle)
+          // Unique names (prevent accidental collision of different 'in' with same name)
           const seen = new Set<string>();
           const uniqueParams = params.filter((p) => {
             if (seen.has(p.name)) return false;
@@ -104,16 +104,16 @@ describe("schema-converter — property-based testleri", () => {
             })),
           });
 
-          // Çıktı her zaman type:'object'
+          // Output is always type:'object'
           expect(result.type).toBe("object");
 
-          // Her path parametresi required içinde olmalı
+          // Every path parameter must be in required
           const pathParams = uniqueParams.filter((p) => p.in === "path");
           for (const p of pathParams) {
             expect(result.required ?? []).toContain(p.name);
           }
 
-          // required tekilleştirilmiş
+          // required is deduplicated
           const req = result.required ?? [];
           expect(new Set(req).size).toBe(req.length);
         }),

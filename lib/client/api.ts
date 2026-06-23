@@ -1,5 +1,5 @@
-// İstemci tarafı bileşenler için ince fetch sarmalayıcı.
-// Tüm istekler aynı Next.js uygulamasındaki /api uçlarına gider.
+// Thin fetch wrapper for client-side components.
+// All requests go to /api endpoints in the same Next.js application.
 
 async function request<T>(
   path: string,
@@ -16,7 +16,7 @@ async function request<T>(
       const body = await res.json();
       message = body.message || body.error || message;
     } catch {
-      // yoksay
+      // ignore
     }
     throw new Error(message);
   }

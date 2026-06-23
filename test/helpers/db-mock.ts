@@ -1,15 +1,15 @@
 import { createMockPrisma } from "./mock-prisma";
 
-// @/lib/db için paylaşılan singleton mock örneği.
+// Shared singleton mock instance for @/lib/db.
 //
-// Kullanım deseni (vitest hoisting güvenli):
+// Usage pattern (vitest hoisting safe):
 //   vi.mock("@/lib/db", async () => {
 //     const mod = await import("../helpers/db-mock");
 //     return { prisma: mod.mockPrisma };
 //   });
 //   import { mockPrisma } from "../helpers/db-mock";
 //
-// ESM modülleri tekildir; vi.mock factory'sindeki dynamic import ile testin
-// statik importu AYNI nesneyi döndürür. Böylece seed/_reset için aynı örneğe
-// erişilir.
+// ESM modules are singletons; the dynamic import inside the vi.mock factory and
+// the test's static import return THE SAME object. This allows accessing the
+// same instance for seed/_reset.
 export const mockPrisma = createMockPrisma();

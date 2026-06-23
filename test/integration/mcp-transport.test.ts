@@ -4,8 +4,8 @@ import nock from "nock";
 import { propertyLabel } from "../helpers/property-label";
 import { FC_RUNS } from "../helpers/fast-check-config";
 
-// MCP transport için inline, kontrol edilebilir prisma mock'u.
-// loadTools/callTool'un kullandığı include'lu sorgular elle modellenir.
+// Inline, controllable prisma mock for MCP transport.
+// The include-based queries used by loadTools/callTool are modeled manually.
 interface Selection {
   id: string;
   apiIntegrationId: string;
@@ -102,7 +102,7 @@ describe("MCP transport — entegrasyon testleri", () => {
     expect(res.status).toBe(400);
   });
 
-  // Task 10.1 — Requirements 9.2: listTools akışı
+  // Task 10.1 — Requirements 9.2: listTools flow
   it("listTools etkin tool'ları döndürür", async () => {
     seedToolAndEndpoint("intA");
     const res = await POST(
@@ -113,7 +113,7 @@ describe("MCP transport — entegrasyon testleri", () => {
     expect(json.tools.map((t) => t.name)).toContain("ping_tool");
   });
 
-  // Task 10.1 — Requirements 9.3: callTool akışı (nock ile hedef API)
+  // Task 10.1 — Requirements 9.3: callTool flow (target API with nock)
   it("callTool hedef API'yi çağırır ve sonucu döndürür", async () => {
     seedToolAndEndpoint("intB");
     nock("https://test.example.com").get("/ping").reply(200, { pong: true });
@@ -130,7 +130,7 @@ describe("MCP transport — entegrasyon testleri", () => {
     expect(json.content[0].text).toContain("pong");
   });
 
-  // Task 10.1 — Requirements 9.4: geçersiz method -> 400
+  // Task 10.1 — Requirements 9.4: invalid method -> 400
   it("geçersiz method HTTP 400 döner", async () => {
     seedToolAndEndpoint("intC");
     const res = await POST(
@@ -139,7 +139,7 @@ describe("MCP transport — entegrasyon testleri", () => {
     expect(res.status).toBe(400);
   });
 
-  // Task 10.1 — Requirements 9.5: integrationId değişiminde tool'lar yeniden yüklenir
+  // Task 10.1 — Requirements 9.5: tools are reloaded when integrationId changes
   it("farklı integrationId için tool'lar yeniden yüklenir", async () => {
     seedToolAndEndpoint("intD");
     const resD = await GET(
@@ -148,7 +148,7 @@ describe("MCP transport — entegrasyon testleri", () => {
     const jsonD = (await resD.json()) as { tools: Array<{ name: string }> };
     expect(jsonD.tools).toHaveLength(1);
 
-    // Farklı entegrasyon: hiç tool yok
+    // Different integration: no tools
     state.selections = [];
     state.endpoints = [];
     const resE = await GET(makeReq({ "x-integration-id": "intE-empty" }) as never);
@@ -163,7 +163,7 @@ describe("MCP transport — property: X-Integration-Id zorunluluğu (Property 8)
     state.endpoints = [];
   });
 
-  // Task 10.2 — Property 8: MCP transport zorunluluğu — Validates: Requirements 9.1
+  // Task 10.2 — Property 8: MCP transport requirement — Validates: Requirements 9.1
   it(
     propertyLabel(
       8,

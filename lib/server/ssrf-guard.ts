@@ -1,11 +1,11 @@
 import dns from "dns/promises";
 import net from "net";
 
-// SSRF koruması. C# `SsrfProtectionService` davranışını taşır:
-//  - Yalnızca mutlak http/https URL'ler kabul edilir.
-//  - Host'un çözümlenen TÜM IP adresleri public ise true; herhangi biri
-//    private/loopback/link-local ise false.
-//  - Geçersiz URL veya DNS hatası -> false (fail-closed).
+// SSRF protection. Ports the behavior of C# `SsrfProtectionService`:
+//  - Only absolute http/https URLs are accepted.
+//  - Returns true only if ALL resolved IP addresses of the host are public;
+//    returns false if any is private/loopback/link-local.
+//  - Invalid URL or DNS error -> false (fail-closed).
 
 function isPrivateIPv4(ip: string): boolean {
   const parts = ip.split(".").map((p) => parseInt(p, 10));
@@ -34,7 +34,7 @@ function isPrivateIp(ip: string): boolean {
   const type = net.isIP(ip);
   if (type === 4) return isPrivateIPv4(ip);
   if (type === 6) return isPrivateIPv6(ip);
-  return true; // tanınmayan -> güvenli tarafta kal
+  return true; // unrecognized -> stay on the safe side
 }
 
 export async function isSafeUrl(url: string): Promise<boolean> {
