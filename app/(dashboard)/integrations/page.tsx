@@ -1,9 +1,6 @@
-import Link from "next/link";
-import { Plus } from "lucide-react";
 import { integrationService } from "@/lib/server/services/integration-service";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IntegrationTable } from "@/components/features/integration-table";
+import { IntegrationsPageHeader } from "@/components/features/integrations-page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -12,26 +9,15 @@ export default async function IntegrationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Entegrasyonlar</h1>
-          <p className="text-sm text-muted-foreground">
-            API entegrasyonlarınızı yönetin ve MCP tool'larına dönüştürün.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/integrations/new">
-            <Plus className="h-4 w-4" />
-            Yeni Entegrasyon
-          </Link>
-        </Button>
-      </div>
+      <IntegrationsPageHeader />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Tüm Entegrasyonlar ({integrations.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-lg border">
+        <div className="border-b p-6">
+          <h2 className="text-lg font-semibold">
+            All Integrations ({integrations.length})
+          </h2>
+        </div>
+        <div className="p-6">
           <IntegrationTable
             data={integrations.map((i) => ({
               id: i.id,
@@ -42,8 +28,8 @@ export default async function IntegrationsPage() {
               activeEnv: i.activeEnv,
             }))}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

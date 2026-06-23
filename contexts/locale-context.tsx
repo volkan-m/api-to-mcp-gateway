@@ -10,15 +10,38 @@ interface LocaleContextType {
 
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 
+function detectBrowserLocale(): Locale {
+  // Önce localStorage'dan kontrol et
+  const savedLocale = localStorage.getItem("locale") as Locale | null;
+  if (savedLocale && locales.includes(savedLocale)) {
+    return savedLocale;
+  }
+
+  // Tarayıcı dilini algıla
+  if (typeof navigator !== "undefined") {
+    const browserLang = navigator.language?.toLowerCase() || "";
+
+    // Tam eşleşme kontrolü (örn: tr-TR -> tr)
+    if (browserLang.startsWith("tr")) {
+      return "tr";
+    }
+
+    // Varsa parent dil eşleştir (örn: en-US -> en)
+    const parentLang = browserLang.split("-")[0]?.toLowerCase();
+    if (parentLang && locales.includes(parentLang as Locale)) {
+      return parentLang as Locale;
+    }
+  }
+
+  return defaultLocale;
+}
+
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(defaultLocale);
 
   useEffect(() => {
-    // localStorage'dan locale yükle
-    const savedLocale = localStorage.getItem("locale") as Locale | null;
-    if (savedLocale && locales.includes(savedLocale)) {
-      setLocaleState(savedLocale);
-    }
+    const detectedLocale = detectBrowserLocale();
+    setLocaleState(detectedLocale);
   }, []);
 
   const setLocale = (newLocale: Locale) => {

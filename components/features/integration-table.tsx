@@ -8,6 +8,7 @@ import { Trash2, ExternalLink } from "lucide-react";
 import { api } from "@/lib/client/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/hooks/use-translation";
 import {
   Table,
   TableBody,
@@ -28,19 +29,20 @@ export interface IntegrationRow {
 
 export function IntegrationTable({ data }: { data: IntegrationRow[] }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`"${name}" entegrasyonu silinsin mi? Bu işlem geri alınamaz.`)) {
+    if (!confirm(t("integrations.deleteConfirm", { name }))) {
       return;
     }
     setDeletingId(id);
     try {
       await api.del(`/api/integrations/${id}`);
-      toast.success("Entegrasyon silindi");
+      toast.success(t("integrations.deleted"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Silme başarısız");
+      toast.error(error instanceof Error ? error.message : t("common.error"));
     } finally {
       setDeletingId(null);
     }
@@ -49,7 +51,7 @@ export function IntegrationTable({ data }: { data: IntegrationRow[] }) {
   if (data.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        Henüz entegrasyon yok. &quot;Yeni Entegrasyon&quot; ile başlayın.
+        {t("integrations.noIntegrationsDescription")}
       </p>
     );
   }
@@ -58,10 +60,10 @@ export function IntegrationTable({ data }: { data: IntegrationRow[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>İsim</TableHead>
-          <TableHead>Açıklama</TableHead>
-          <TableHead>Aktif Ortam</TableHead>
-          <TableHead className="text-right">İşlemler</TableHead>
+          <TableHead>{t("integrations.name")}</TableHead>
+          <TableHead>{t("integrations.description")}</TableHead>
+          <TableHead>{t("integrations.activeEnv")}</TableHead>
+          <TableHead className="text-right">{t("common.actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

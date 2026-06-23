@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/client/api";
+import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,7 @@ export function EndpointsPanel({
   endpoints: EndpointRow[];
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<DialogMode>({ kind: "closed" });
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -132,21 +134,20 @@ export function EndpointsPanel({
 
   async function handleSubmit() {
     if (!form.path.trim()) {
-      toast.error("Path zorunludur");
+      toast.error(t("endpoints.pathRequired"));
       return;
     }
-    // inputSchema JSON doğrulaması (sunucu da doğruluyor; burada erken uyarı).
     try {
       JSON.parse(form.inputSchema);
     } catch {
-      toast.error("inputSchema geçerli bir JSON olmalıdır");
+      toast.error(t("validation.required"));
       return;
     }
     if (form.outputSchema.trim()) {
       try {
         JSON.parse(form.outputSchema);
       } catch {
-        toast.error("outputSchema geçerli bir JSON olmalıdır");
+        toast.error(t("validation.required"));
         return;
       }
     }
@@ -169,29 +170,29 @@ export function EndpointsPanel({
           `/api/integrations/${integrationId}/endpoints/${mode.endpoint.id}`,
           payload,
         );
-        toast.success("Endpoint güncellendi");
+        toast.success(t("endpoints.updated"));
       } else {
         await api.post(`/api/integrations/${integrationId}/endpoints`, payload);
-        toast.success("Endpoint eklendi");
+        toast.success(t("endpoints.created"));
       }
       closeDialog();
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "İşlem başarısız");
+      toast.error(error instanceof Error ? error.message : t("endpoints.operationFailed"));
     } finally {
       setBusy(false);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Endpoint silinsin mi?")) return;
+    if (!confirm(t("endpoints.deleteConfirm"))) return;
     setBusy(true);
     try {
       await api.del(`/api/integrations/${integrationId}/endpoints/${id}`);
-      toast.success("Endpoint silindi");
+      toast.success(t("endpoints.deleted"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Silme başarısız");
+      toast.error(error instanceof Error ? error.message : t("endpoints.operationFailed"));
     } finally {
       setBusy(false);
     }
@@ -203,7 +204,7 @@ export function EndpointsPanel({
         <div className="flex justify-end">
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4" />
-            Endpoint Ekle
+            {t("endpoints.add")}
           </Button>
         </div>
 
@@ -214,13 +215,13 @@ export function EndpointsPanel({
           <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>
-                {isEdit ? "Endpoint Düzenle" : "Yeni Endpoint"}
+                {isEdit ? t("endpoints.edit") : t("endpoints.new")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-[140px_1fr] gap-3">
                 <div className="space-y-2">
-                  <Label>Method</Label>
+                  <Label>{t("endpoints.method")}</Label>
                   <Select
                     value={form.method}
                     onValueChange={(v) => set("method", v)}
@@ -238,55 +239,56 @@ export function EndpointsPanel({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Path</Label>
+                  <Label>{t("endpoints.path")}</Label>
                   <Input
                     value={form.path}
                     onChange={(e) => set("path", e.target.value)}
-                    placeholder="/users/{id}"
+                    placeholder={t("endpoints.pathPlaceholder")}
                     className="font-mono"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Özet</Label>
+                <Label>{t("endpoints.summary")}</Label>
                 <Input
                   value={form.summary}
                   onChange={(e) => set("summary", e.target.value)}
-                  placeholder="Kısa açıklama"
+                  placeholder={t("endpoints.summaryPlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Açıklama</Label>
+                <Label>{t("endpoints.description")}</Label>
                 <Textarea
                   value={form.description}
                   onChange={(e) => set("description", e.target.value)}
                   rows={2}
+                  placeholder={t("endpoints.descriptionPlaceholder")}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>External URL (prod)</Label>
+                  <Label>{t("endpoints.externalUrlProd")}</Label>
                   <Input
                     value={form.externalUrlProd}
                     onChange={(e) => set("externalUrlProd", e.target.value)}
-                    placeholder="opsiyonel"
+                    placeholder={t("validation.required")}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>External URL (test)</Label>
+                  <Label>{t("endpoints.externalUrlTest")}</Label>
                   <Input
                     value={form.externalUrlTest}
                     onChange={(e) => set("externalUrlTest", e.target.value)}
-                    placeholder="opsiyonel"
+                    placeholder={t("validation.required")}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>inputSchema (JSON)</Label>
+                <Label>{t("endpoints.requestSchema")}</Label>
                 <Textarea
                   value={form.inputSchema}
                   onChange={(e) => set("inputSchema", e.target.value)}
@@ -296,7 +298,7 @@ export function EndpointsPanel({
               </div>
 
               <div className="space-y-2">
-                <Label>outputSchema (JSON, opsiyonel)</Label>
+                <Label>{t("endpoints.responseSchema")}</Label>
                 <Textarea
                   value={form.outputSchema}
                   onChange={(e) => set("outputSchema", e.target.value)}
@@ -307,7 +309,7 @@ export function EndpointsPanel({
             </div>
             <DialogFooter>
               <Button onClick={handleSubmit} disabled={busy}>
-                Kaydet
+                {t("common.save")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -315,16 +317,16 @@ export function EndpointsPanel({
 
         {endpoints.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Henüz endpoint yok. Spec&apos;lerden endpoint çıkarın veya manuel ekleyin.
+            {t("endpoints.empty")}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Method</TableHead>
-                <TableHead>Path</TableHead>
-                <TableHead>Özet</TableHead>
-                <TableHead className="text-right">İşlem</TableHead>
+                <TableHead>{t("endpoints.method")}</TableHead>
+                <TableHead>{t("endpoints.path")}</TableHead>
+                <TableHead>{t("endpoints.summary")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

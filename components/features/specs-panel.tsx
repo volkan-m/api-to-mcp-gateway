@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileUp, Link2, Zap } from "lucide-react";
 import { api } from "@/lib/client/api";
+import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,13 +37,14 @@ export function SpecsPanel({
   specs: SpecRow[];
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [content, setContent] = useState("");
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function handleUpload() {
     if (!content.trim()) {
-      toast.error("Spec içeriği boş olamaz");
+      toast.error(t("validation.required"));
       return;
     }
     setBusy(true);
@@ -50,11 +52,11 @@ export function SpecsPanel({
       await api.post(`/api/integrations/${integrationId}/specs/upload`, {
         content,
       });
-      toast.success("Spec yüklendi");
+      toast.success(t("specs.uploaded"));
       setContent("");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Yükleme başarısız");
+      toast.error(error instanceof Error ? error.message : t("specs.operationFailed"));
     } finally {
       setBusy(false);
     }
@@ -62,17 +64,17 @@ export function SpecsPanel({
 
   async function handleDownload() {
     if (!url.trim()) {
-      toast.error("URL girin");
+      toast.error(t("validation.required"));
       return;
     }
     setBusy(true);
     try {
       await api.post(`/api/integrations/${integrationId}/specs/url`, { url });
-      toast.success("Spec URL'den indirildi");
+      toast.success(t("specs.uploaded"));
       setUrl("");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "İndirme başarısız");
+      toast.error(error instanceof Error ? error.message : t("specs.operationFailed"));
     } finally {
       setBusy(false);
     }
@@ -84,10 +86,10 @@ export function SpecsPanel({
       const res = await api.post<{ count: number }>(
         `/api/integrations/${integrationId}/specs/${specId}/extract`,
       );
-      toast.success(`${res.count} endpoint çıkarıldı`);
+      toast.success(t("specs.extracted"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Çıkarma başarısız");
+      toast.error(error instanceof Error ? error.message : t("specs.operationFailed"));
     } finally {
       setBusy(false);
     }
@@ -100,14 +102,14 @@ export function SpecsPanel({
           <Tabs defaultValue="upload">
             <TabsList>
               <TabsTrigger value="upload">
-                <FileUp className="h-4 w-4" /> İçerik Yükle
+                <FileUp className="h-4 w-4" /> {t("specs.upload")}
               </TabsTrigger>
               <TabsTrigger value="url">
-                <Link2 className="h-4 w-4" /> URL'den İndir
+                <Link2 className="h-4 w-4" /> {t("specs.upload")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="upload" className="space-y-2">
-              <Label>OpenAPI / Swagger içeriği (JSON veya YAML)</Label>
+              <Label>{t("specs.file")}</Label>
               <Textarea
                 rows={8}
                 value={content}
@@ -116,18 +118,18 @@ export function SpecsPanel({
                 className="font-mono text-xs"
               />
               <Button onClick={handleUpload} disabled={busy}>
-                Yükle
+                {t("specs.upload")}
               </Button>
             </TabsContent>
             <TabsContent value="url" className="space-y-2">
-              <Label>Spec URL'i</Label>
+              <Label>{t("specs.upload")}</Label>
               <Input
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://api.example.com/swagger.json"
               />
               <Button onClick={handleDownload} disabled={busy}>
-                İndir
+                {t("specs.upload")}
               </Button>
             </TabsContent>
           </Tabs>
@@ -138,16 +140,16 @@ export function SpecsPanel({
         <CardContent className="pt-6">
           {specs.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              Henüz spec yok.
+              {t("specs.empty")}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Başlık</TableHead>
-                  <TableHead>Format</TableHead>
-                  <TableHead>Versiyon</TableHead>
-                  <TableHead className="text-right">İşlem</TableHead>
+                  <TableHead>{t("specs.title")}</TableHead>
+                  <TableHead>{t("specs.format")}</TableHead>
+                  <TableHead>{t("specs.version")}</TableHead>
+                  <TableHead className="text-right">{t("common.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -166,7 +168,7 @@ export function SpecsPanel({
                         onClick={() => handleExtract(s.id)}
                       >
                         <Zap className="h-4 w-4" />
-                        Endpoint Çıkar
+                        {t("specs.extract")}
                       </Button>
                     </TableCell>
                   </TableRow>

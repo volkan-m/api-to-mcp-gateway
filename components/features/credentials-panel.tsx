@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/client/api";
+import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ export function CredentialsPanel({
   credentials: CredentialRow[];
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<DialogMode>({ kind: "closed" });
   const [submitting, setSubmitting] = useState(false);
   const [credentialType, setCredentialType] = useState("bearer");
@@ -81,11 +83,11 @@ export function CredentialsPanel({
 
   async function handleSubmit() {
     if (!keyName) {
-      toast.error("Anahtar adı zorunludur");
+      toast.error(t("credentials.keyNameRequired"));
       return;
     }
     if (!isEdit && !keyValue) {
-      toast.error("Anahtar değeri zorunludur");
+      toast.error(t("credentials.keyValueRequired"));
       return;
     }
     setSubmitting(true);
@@ -96,36 +98,35 @@ export function CredentialsPanel({
           {
             credentialType,
             keyName,
-            // Boş bırakılırsa sunucu mevcut değeri korur.
             keyValue: keyValue || undefined,
           },
         );
-        toast.success("Credential güncellendi");
+        toast.success(t("credentials.updated"));
       } else {
         await api.post(`/api/integrations/${integrationId}/credentials`, {
           credentialType,
           keyName,
           keyValue,
         });
-        toast.success("Credential eklendi");
+        toast.success(t("credentials.created"));
       }
       closeDialog();
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "İşlem başarısız");
+      toast.error(error instanceof Error ? error.message : t("credentials.operationFailed"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Credential silinsin mi?")) return;
+    if (!confirm(t("credentials.deleteConfirm"))) return;
     try {
       await api.del(`/api/integrations/${integrationId}/credentials/${id}`);
-      toast.success("Credential silindi");
+      toast.success(t("credentials.deleted"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Silme başarısız");
+      toast.error(error instanceof Error ? error.message : t("credentials.deleteFailed"));
     }
   }
 
@@ -135,7 +136,7 @@ export function CredentialsPanel({
         <div className="flex justify-end">
           <Button size="sm" onClick={openCreate}>
             <Plus className="h-4 w-4" />
-            Credential Ekle
+            {t("credentials.add")}
           </Button>
         </div>
 
@@ -146,12 +147,12 @@ export function CredentialsPanel({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {isEdit ? "Credential Düzenle" : "Yeni Credential"}
+                {isEdit ? t("credentials.edit") : t("credentials.new")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Tür</Label>
+                <Label>{t("credentials.type")}</Label>
                 <Select
                   value={credentialType}
                   onValueChange={setCredentialType}
@@ -167,30 +168,30 @@ export function CredentialsPanel({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Anahtar Adı</Label>
+                <Label>{t("credentials.keyName")}</Label>
                 <Input
                   value={keyName}
                   onChange={(e) => setKeyName(e.target.value)}
-                  placeholder="X-API-Key veya Authorization"
+                  placeholder={t("credentials.placeholder")}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Anahtar Değeri</Label>
+                <Label>{t("credentials.keyValue")}</Label>
                 <Input
                   type="password"
                   value={keyValue}
                   onChange={(e) => setKeyValue(e.target.value)}
                   placeholder={
                     isEdit
-                      ? "Değiştirmemek için boş bırakın"
-                      : "Gizli değer (şifreli saklanır)"
+                      ? t("credentials.placeholderEdit")
+                      : t("credentials.placeholderCreate")
                   }
                 />
               </div>
             </div>
             <DialogFooter>
               <Button onClick={handleSubmit} disabled={submitting}>
-                Kaydet
+                {t("common.save")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -198,16 +199,16 @@ export function CredentialsPanel({
 
         {credentials.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Henüz credential yok.
+            {t("credentials.empty")}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tür</TableHead>
-                <TableHead>Anahtar Adı</TableHead>
-                <TableHead>Değer (maskeli)</TableHead>
-                <TableHead className="text-right">İşlem</TableHead>
+                <TableHead>{t("credentials.type")}</TableHead>
+                <TableHead>{t("credentials.keyName")}</TableHead>
+                <TableHead>{t("credentials.value")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -1,14 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { integrationService } from "@/lib/server/services/integration-service";
 import { credentialService } from "@/lib/server/services/credential-service";
 import { specService } from "@/lib/server/services/spec-service";
 import { endpointService } from "@/lib/server/services/endpoint-service";
 import { toolService } from "@/lib/server/services/tool-service";
 import { isAppError } from "@/lib/server/errors";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { IntegrationDetailHeader } from "@/components/features/integration-detail-header";
 import { IntegrationDetailTabs } from "@/components/features/integration-detail-tabs";
 
 export const dynamic = "force-dynamic";
@@ -29,31 +26,12 @@ export default async function IntegrationDetailPage({ params }: Props) {
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/integrations">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold">{integration.name}</h1>
-              <Badge
-                variant={integration.activeEnv === "prod" ? "default" : "secondary"}
-              >
-                {integration.activeEnv}
-              </Badge>
-            </div>
-            {integration.description && (
-              <p className="text-sm text-muted-foreground">
-                {integration.description}
-              </p>
-            )}
-          </div>
-          <Button asChild variant="outline">
-            <Link href={`/integrations/${id}/edit`}>Düzenle</Link>
-          </Button>
-        </div>
+        <IntegrationDetailHeader
+          id={id}
+          name={integration.name}
+          description={integration.description}
+          activeEnv={integration.activeEnv}
+        />
 
         <IntegrationDetailTabs
           integrationId={id}

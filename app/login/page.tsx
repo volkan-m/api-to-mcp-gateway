@@ -14,10 +14,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/use-translation";
 
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -32,13 +34,13 @@ function LoginForm() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || "Giriş başarısız");
+        throw new Error(body.message || t("login.error"));
       }
       const next = params.get("next") || "/integrations";
       router.push(next);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Giriş başarısız");
+      toast.error(error instanceof Error ? error.message : t("login.error"));
     } finally {
       setBusy(false);
     }
@@ -49,14 +51,14 @@ function LoginForm() {
       <CardHeader className="space-y-1">
         <div className="flex items-center gap-2">
           <Boxes className="h-5 w-5" />
-          <CardTitle>MCP Gateway</CardTitle>
+          <CardTitle>{t("login.title")}</CardTitle>
         </div>
-        <CardDescription>Yönetim paneline giriş yapın</CardDescription>
+        <CardDescription>{t("login.subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password">Şifre</Label>
+            <Label htmlFor="password">{t("login.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -66,7 +68,7 @@ function LoginForm() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={busy}>
-            Giriş Yap
+            {busy ? t("common.loading") : t("login.signIn")}
           </Button>
         </form>
       </CardContent>

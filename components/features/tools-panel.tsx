@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/client/api";
+import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ export function ToolsPanel({
   endpoints: EndpointRow[];
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [endpointId, setEndpointId] = useState("");
@@ -71,20 +73,20 @@ export function ToolsPanel({
 
   async function handleCreate() {
     if (!endpointId || !toolName) {
-      toast.error("Endpoint ve tool adı zorunludur");
+      toast.error(t("validation.required"));
       return;
     }
     setBusy(true);
     try {
       await upsert({ endpointId, toolName, toolDescription, enabled: true });
-      toast.success("Tool kaydedildi");
+      toast.success(t("tools.saved"));
       setOpen(false);
       setEndpointId("");
       setToolName("");
       setToolDescription("");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Kaydetme başarısız");
+      toast.error(error instanceof Error ? error.message : t("tools.operationFailed"));
     } finally {
       setBusy(false);
     }
@@ -98,21 +100,21 @@ export function ToolsPanel({
         toolDescription: tool.toolDescription ?? undefined,
         enabled,
       });
-      toast.success(enabled ? "Tool etkinleştirildi" : "Tool devre dışı");
+      toast.success(t("tools.saved"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Güncelleme başarısız");
+      toast.error(error instanceof Error ? error.message : t("tools.operationFailed"));
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Tool seçimi silinsin mi?")) return;
+    if (!confirm(t("tools.deleteConfirm"))) return;
     try {
       await api.del(`/api/integrations/${integrationId}/tools/${id}`);
-      toast.success("Tool silindi");
+      toast.success(t("tools.deleted"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Silme başarısız");
+      toast.error(error instanceof Error ? error.message : t("tools.operationFailed"));
     }
   }
 
@@ -124,19 +126,19 @@ export function ToolsPanel({
             <DialogTrigger asChild>
               <Button size="sm" disabled={endpoints.length === 0}>
                 <Plus className="h-4 w-4" />
-                Tool Ekle
+                {t("tools.add")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Endpoint'i Tool'a Dönüştür</DialogTitle>
+                <DialogTitle>{t("tools.title")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Endpoint</Label>
+                  <Label>{t("tools.endpoint")}</Label>
                   <Select value={endpointId} onValueChange={setEndpointId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Endpoint seçin" />
+                      <SelectValue placeholder={t("validation.required")} />
                     </SelectTrigger>
                     <SelectContent>
                       {endpoints.map((e) => (
@@ -148,7 +150,7 @@ export function ToolsPanel({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Tool Adı</Label>
+                  <Label>{t("tools.toolName")}</Label>
                   <Input
                     value={toolName}
                     onChange={(e) => setToolName(e.target.value)}
@@ -156,7 +158,7 @@ export function ToolsPanel({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Açıklama</Label>
+                  <Label>{t("tools.toolDescription")}</Label>
                   <Input
                     value={toolDescription}
                     onChange={(e) => setToolDescription(e.target.value)}
@@ -166,7 +168,7 @@ export function ToolsPanel({
               </div>
               <DialogFooter>
                 <Button onClick={handleCreate} disabled={busy}>
-                  Kaydet
+                  {t("common.save")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -175,16 +177,16 @@ export function ToolsPanel({
 
         {tools.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Henüz tool yok. Önce endpoint çıkarın, sonra tool'a dönüştürün.
+            {t("tools.empty")}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tool Adı</TableHead>
-                <TableHead>Endpoint</TableHead>
-                <TableHead>Etkin</TableHead>
-                <TableHead className="text-right">İşlem</TableHead>
+                <TableHead>{t("tools.toolName")}</TableHead>
+                <TableHead>{t("tools.endpoint")}</TableHead>
+                <TableHead>{t("tools.enabled")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/hooks/use-translation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CredentialsPanel, type CredentialRow } from "./credentials-panel";
 import { SpecsPanel, type SpecRow } from "./specs-panel";
@@ -22,18 +23,20 @@ export function IntegrationDetailTabs({
   endpoints,
   tools,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <Tabs defaultValue="specs" className="w-full">
       <TabsList>
-        <TabsTrigger value="specs">Spec'ler ({specs.length})</TabsTrigger>
+        <TabsTrigger value="specs">{t("detail.specs")} ({specs.length})</TabsTrigger>
         <TabsTrigger value="endpoints">
-          Endpoint'ler ({endpoints.length})
+          {t("detail.endpoints")} ({endpoints.length})
         </TabsTrigger>
-        <TabsTrigger value="tools">Tool'lar ({tools.length})</TabsTrigger>
+        <TabsTrigger value="tools">{t("detail.tools")} ({tools.length})</TabsTrigger>
         <TabsTrigger value="credentials">
-          Credential'lar ({credentials.length})
+          {t("detail.credentials")} ({credentials.length})
         </TabsTrigger>
-        <TabsTrigger value="mcp">MCP Bağlantısı</TabsTrigger>
+        <TabsTrigger value="mcp">{t("detail.mcpConfig")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="specs">
